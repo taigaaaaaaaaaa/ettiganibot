@@ -6,6 +6,7 @@ import { joinVoiceChannel } from "@discordjs/voice";
 import readline from "readline";
 import express from "express";
 import api from "./api.js";
+import { fileURLToPath } from "url";
 import { commands, loadCommands, registerGuildCommands } from "./src/commandLoader.js";
 import { handleGuildCreate } from "./src/guildSetup.js";
 import { registerBotEvents } from "./src/botEvents.js";
@@ -13,7 +14,7 @@ import { sendDailyRanking, sendWeeklyRanking, sendMonthlyRanking } from "./src/r
 import { sendLogToAPI } from "./src/externalApi.js";
 
 // .env を読み込んで、起動前に環境変数を準備する
-dotenv.config({ path: "./.env" });
+dotenv.config({ path: fileURLToPath(new URL("./.env", import.meta.url)) });
 
 // Discord クライアントを作成
 const client = new Client({
