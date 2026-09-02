@@ -142,16 +142,64 @@ function sendToChannel(channelId, message) {
         .catch(err => console.error("送信エラー:", err));
 }
 
+async function sendToAllGuilds(message) {
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (const guild of client.guilds.cache.values()) {
+        const botMember = guild.members.me;
+        const channel = guild.channels.cache.find(candidate => {
+            const permissions = candidate.permissionsFor(botMember);
+            return candidate.isTextBased() &&
+                permissions?.has("SendMessages") &&
+                permissions.has("EmbedLinks");
+        });
+
+        if (!channel) {
+            console.log(`送信先がありません: ${guild.name} (${guild.id})`);
+            failedCount++;
+            continue;
+        }
+
+        try {
+            await channel.send({
+                embeds: [{
+                    color: 0xff66aa,
+                    description: message,
+                    timestamp: new Date().toISOString()
+                }]
+            });
+            console.log(`全サーバー送信完了: ${guild.name} -> #${channel.name}`);
+            sentCount++;
+        } catch (err) {
+            console.error(`送信失敗: ${guild.name} (${guild.id})`, err.message);
+            failedCount++;
+        }
+    }
+
+    console.log(`全サーバー送信結果: 成功 ${sentCount} / 失敗 ${failedCount}`);
+}
+
 const TARGET_BOT_ID = process.env.TARGET_BOT_ID;
 process.stdin.resume();
 process.stdin.setEncoding("utf8");
 
-process.stdin.on("data", (data) => {
+process.stdin.on("data", async (data) => {
     const input = data.toString().trim();
     if (!input) return;
 
     const [channelId, ...msgParts] = input.split(" ");
-    const message = msgParts.join(" ");
+    const message = msgParts.join(" ").replace(/\\n/g, "\n");
+
+    if (channelId === "broadcast") {
+        if (!message) {
+            console.log("使い方: broadcast <メッセージ>");
+            return;
+        }
+
+        await sendToAllGuilds(message);
+        return;
+    }
 
     if (!channelId || !message) {
         console.log("使い方: <チャンネルID> <メッセージ>");

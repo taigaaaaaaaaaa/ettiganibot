@@ -8,6 +8,25 @@ const ignoreUsers = [
     "1444297892993962045"
 ];
 
+function writeKeywordLog(message, keyword) {
+    const today = new Date();
+    const fileName = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}.log`;
+    const logPath = logsPath(fileName);
+    const content = message.content.replace(/\r?\n/g, "\\n");
+
+    fs.appendFileSync(logPath, [
+        "--- キーワード検知ログ ---",
+        `日時: ${formatDate()}`,
+        `キーワード: ${keyword}`,
+        `ユーザー: ${message.author.tag} (${message.author.id})`,
+        `サーバー: ${message.guild?.name ?? "DM"} (${message.guild?.id ?? "DM"})`,
+        `チャンネル: ${message.channel?.name ?? "不明"} (${message.channel?.id ?? "不明"})`,
+        `メッセージ: ${content}`,
+        `URL: https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`,
+        ""
+    ].join("\n"), "utf8");
+}
+
 // 削除メッセージを guild 単位で保存する
 export function saveDeletedMessage(data) {
     const guildId = data?.guildId || data?.guild?.id || "DM";
@@ -55,25 +74,21 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
             console.log(`🦀 リアクション検知: ${user.tag} → ${message.author?.tag ?? "不明"} / 内容: ${message.content}`);
 
             const today = new Date();
-            const fileName = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}.json`;
+            const fileName = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}.log`;
             const logPath = logsPath(fileName);
 
-            fs.appendFileSync(logPath, JSON.stringify({
-                timestamp: formatDate(),
-                action: "reaction",
-                reactionEmoji: "🦀",
-                reactor: { username: user.tag, id: user.id },
-                messageAuthor: { username: message.author.tag, id: message.author.id },
-                location: {
-                    guildName: message.guild?.name ?? "DM",
-                    guildId: message.guild?.id ?? "DM",
-                    channelName: message.channel?.name ?? "DM",
-                    channelId: message.channel.id,
-                    messageId: message.id,
-                    messageURL: `https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`
-                },
-                messageContent: message.content
-            }) + "\n");
+            fs.appendFileSync(logPath, [
+                "--- リアクションログ ---",
+                `日時: ${formatDate()}`,
+                "種類: 🦀リアクション",
+                `リアクションしたユーザー: ${user.tag} (${user.id})`,
+                `メッセージ投稿者: ${message.author.tag} (${message.author.id})`,
+                `サーバー: ${message.guild?.name ?? "DM"} (${message.guild?.id ?? "DM"})`,
+                `チャンネル: ${message.channel?.name ?? "不明"} (${message.channel?.id ?? "不明"})`,
+                `メッセージ: ${message.content.replace(/\r?\n/g, "\\n")}`,
+                `URL: https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`,
+                ""
+            ].join("\n"), "utf8");
 
             if (reactedMessages.has(message.id)) return;
 
@@ -112,6 +127,7 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
         const xpKeywords = ["えっち", "エッチ"];
         if (xpKeywords.some(word => lower.includes(word.toLowerCase()))) {
             console.log(`🔍 キーワード検知: ${message.author.tag} / 内容: ${message.content}`);
+            writeKeywordLog(message, "えっち");
             await message.reply("えっちがに！！！");
             await processUserProgress(message);
             return;
@@ -124,6 +140,7 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
         const noXPKeywords = ["テルマニア"];
         if (noXPKeywords.some(word => lower.includes(word.toLowerCase()))) {
             console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
+            writeKeywordLog(message, "テルマニア");
             await message.reply("えっちだに...");
             return;
         }
@@ -131,6 +148,7 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
         const secondnoXPKeywords = ["あまのじゃむ", "リア充"];
         if (secondnoXPKeywords.some(word => lower.includes(word.toLowerCase()))) {
             console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
+            writeKeywordLog(message, "あまのじゃむ / リア充");
             await message.reply("リア充はタンスの角に足の小指ぶつけろ！！\n-# 僕らの分まで幸せになれよ;;");
             return;
         }
@@ -138,6 +156,7 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
         const chocoKeywords = ["チョコch", "チョコさん"];
         if (chocoKeywords.some(word => lower.includes(word.toLowerCase()))) {
             console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
+            writeKeywordLog(message, "チョコch / チョコさん");
 
             const chocoReplies = [
                 "チョコchって変態カカオ豆だよね（？）",
