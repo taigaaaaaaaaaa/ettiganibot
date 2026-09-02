@@ -1,4 +1,4 @@
-# えっちがにbot 
+# えっちがにbot
 
 このbotはくだらん機能しかついてないdiscord botです。
 これはプログラミング初めたての時からコツコツ作り上げたものです。
@@ -9,118 +9,215 @@
 
 本当にこのbotには私の思い出が詰まってます。よかったら使ってください。
 
-## 主な機能
+## 機能
 
-## よくわからない機能
-- 特定のメッセージを送信したら特定のメッセージが返されます。
-- 🦀のリアクションをメッセージにつけると"えっちがに！"と返されます。
+- メッセージ内の「えっち」と「🦀」をカウントし、XPとレベルを管理
+- 🦀リアクションへの自動返信
+- キーワードへの自動返信
+- 日間・週間・月間ランキングの自動投稿
+- 削除メッセージの保存と表示
+- Embed形式の全サーバー一括メッセージ送信
+- 指定のチャンネルへのメッセージ送信
+- 指定のボイスチャンネルへの参加
+- キーワード検知とリアクションのテキストログ保存
 
-### XP・レベルシステム
+## 必要な環境
 
-- メッセージを送信すると「えっちがに」として自動カウント
-- 累計「えっちがに」数に基づいてレベルが上昇
-- `/level` で現在のレベルを確認
-- `/next_level` で次のレベルまでの必要カウント数を表示
-- `/level_rank` でレベルランキング表示
+- Node.js 20以上
+- npm
+- DiscordとBotトークン
 
-### ランキング機能
-
-- `/today` / `/my_today` - 今日のカウント
-- `/weekly` / `/my_weekly` - 今週のカウント
-- `/monthly` / `/my_monthly` - 今月のカウント
-- `/total` / `/my_total` - 累計カウント
-- 毎日・毎週月曜日・月初の 0:00 に上位ランカーを自動投稿
-
-### その他機能
-
-- `/gamertag` - Minecraft ゲーマータグ管理
-- `/DeletedMessage` - サーバー内で削除されたメッセージを表示
-- `/setting` - ランキング投稿先チャンネルの設定（管理者限定）
-- `/help` - コマンド一覧と機能説明
-
-## フォルダ構造
+Node.jsは公式サイトからインストールしてください。
 
 ```text
-.
-├─ README.md
-├─ .gitignore
-├─ ettiganibot/
-│  ├─ .env.example
-│  ├─ .env
-│  ├─ main.js
-│  ├─ api.js
-│  ├─ cli.js
-│  ├─ package.json
-│  ├─ commands/
-│  ├─ src/
-│  ├─ data/
-│  │  ├─ guilds/
-│  │  │  └─ <guildId>/
-│  │  │     └─ DeletedMessage.json
-│  │  ├─ counts.json
-│  │  ├─ levels.json
-│  │  ├─ total.json
-│  │  ├─ weekly.json
-│  │  ├─ monthly.json
-│  │  └─ setting.json
-│  └─ logs/
-
+https://nodejs.org/
 ```
 
-## セットアップ手順
+バージョン確認:
 
-1. `ettiganibot` に移動する
-2. `.env.example` をコピーして `.env` を作成する
-3. 必要な環境変数を設定する
-4. 依存関係を入れる
-5. 起動する
+```cmd
+node --version
+npm --version
+```
 
-```bash
+## Discord側の設定
+
+1. Discord Developer PortalでApplicationを作成する
+2. Botを追加してトークンを発行する
+3. `Bot` の `Message Content Intent` を有効にする
+4. OAuth2の招待URLを作成する
+5. Scopesに `bot` と `applications.commands` を指定する
+6. Bot権限に、少なくとも次を指定する
+
+- View Channels
+- Send Messages
+- Embed Links
+- Read Message History
+- Add Reactions
+- Manage Messages（削除メッセージ検知に必要）
+
+`めんどくさかったら管理権限を付与する設定にしてください。私はそうしました。`
+
+## インストール
+
+リポジトリのルートから実行します。
+
+```cmd
 cd ettiganibot
-npm install
-npm start
+npm install discord.js@^14.25.1 dotenv@^17.3.1 express@^5.2.1 node-cron@^4.2.1 @discordjs/voice@^0.18.0
 ```
 
-## 必須環境変数
+主なパッケージ:
 
-`.env` には次を設定します。
+| パッケージ | 用途 |
+| --- | --- |
+| `discord.js` | Discord Bot API |
+| `@discordjs/voice` | ボイスチャンネル接続 |
+| `dotenv` | `.env` の読み込み |
+| `express` | CLI用APIサーバー |
+| `node-cron` | 定期ランキング処理 |
+
+## 環境変数
+
+`.env.example` をコピーして `.env` を作成します。
+
+```cmd
+copy .env.example .env
+```
+
+`.env` を編集します。
 
 ```env
-TOKEN=your_discord_bot_token
-CLI_KEY=your_cli_key
-TARGET_BOT_ID=your_target_bot_id
+TOKEN=Discord_Bot_Token
+CLI_KEY=任意の長いランダムな文字列
+TARGET_BOT_ID=対象BotのID
 ```
 
-## 重要な設計ポイント
+`TOKEN` は絶対に公開しないでください。漏えいした場合はDeveloper Portalでトークンを再生成します。
 
-- この bot は guild コマンド中心です
-- グローバルコマンド登録は基本的に使いません
-- 追加・更新したコマンドは bot 再起動後に guild へ再登録されます
-- 重要な JSON はプロジェクト直下ではなく `ettiganibot/data/` に保存されます
-- `DeletedMessage.json` は guild ごとに分離して保存されます
+## 起動
 
-## よく使うコマンド
-
-```bash
+```cmd
 cd ettiganibot
+node main.js
+```
+
+起動後に `Bot 起動完了` と表示されればログイン成功です。別の方法:
+
+```cmd
 npm start
 npm run dev
 npm run check
 ```
 
-## Git 管理対象から外すべきファイル
+`npm run dev` はファイル変更時に自動再起動します。`npm run check` は構文チェックです。
 
-以下は実行時に生成されるので、通常は `.gitignore` に入れて管理しない方が安全です。これしてくださいね、絶対。
+## スラッシュコマンド
 
-- `.env`
-- `ettiganibot/data/*.json`
-- `ettiganibot/logs/`
-- `ettiganibot/node_modules/`
-- `ettiganibot/.env`
+| コマンド | 内容 |
+| --- | --- |
+| `/today` | 今日のランキング |
+| `/weekly` | 今週のランキング |
+| `/monthly` | 今月のランキング |
+| `/total` | 累計ランキング |
+| `/my_today` | 自分の今日のカウント |
+| `/my_weekly` | 自分の週間カウント |
+| `/my_monthly` | 自分の月間カウント |
+| `/my_total` | 自分の累計カウント |
+| `/level` | 自分のレベル |
+| `/next_level` | 次のレベルまでの必要数 |
+| `/level_rank` | レベルランキング |
+| `/gamertag` | Minecraftゲーマータグ設定 |
+| `/DeletedMessage` | 削除メッセージ表示 |
+| `/setting` | ランキング投稿先を設定（管理者限定） |
+| `/help` | コマンド一覧 |
+
+## CMDからメッセージを送信
+
+Bot起動中のCMDへ入力します。
+
+特定チャンネルへ送信:
+
+```text
+チャンネルID メッセージ
+```
+
+Embed形式で全サーバーへ送信:
+
+```text
+broadcast お知らせです
+```
+
+改行は `\n` を使います。
+
+```text
+broadcast 1行目\n2行目\n3行目
+```
+
+全サーバーでBotが `SendMessages` と `EmbedLinks` を持つチャンネルが自動選択されます。送信先がないサーバーはスキップされます。
+
+## データとログ
+
+- `data/counts.json`: 日ごとのカウント
+- `data/total.json`: 累計カウント
+- `data/levels.json`: レベル情報
+- `data/weekly.json`: 週間集計
+- `data/monthly.json`: 月間集計
+- `data/setting.json`: サーバーごとのランキング投稿先
+- `data/guilds/<guildId>/DeletedMessage.json`: サーバーごとの削除メッセージ
+- `data/logs/YYYY-MM-DD.log`: キーワード・リアクションログ
+
+JSONやログはBotの実行中に自動作成・更新されます。バックアップする場合はBotを停止してからコピーしてください。
+
+## トラブルシューティング
+
+### `TokenInvalid` が表示される
+
+- `ettiganibot/.env` が存在するか確認する
+- `TOKEN` の名前が正しいか確認する
+- トークン前後に余計な空白や引用符を入れない
+- トークンを再生成した場合は `.env` を更新する
+
+### コマンドが表示されない
+
+- Botを再起動する
+- `applications.commands` scope付きで招待する
+- Botが対象サーバーに参加しているか確認する
+
+### メッセージに反応しない
+
+- `Message Content Intent` を有効にする
+- Botに対象チャンネルの閲覧・送信権限があるか確認する
+- 一部のキーワードは特定サーバー限定です
+
+## フォルダ構成
+
+```text
+.
+├─ README.md
+├─ .gitignore
+└─ ettiganibot/
+	├─ .env.example
+	├─ main.js
+	├─ api.js
+	├─ cli.js
+	├─ commands/
+	├─ src/
+	└─ data/
+		├─ guilds/
+		├─ logs/
+		└─ *.json (json形式で保存したい場合はコード書き換えてくださいね。)
+```
+
+## セキュリティ
+
+`.env`、Botトークン、`CLI_KEY` はGitHubへ公開しないでください。運用中のBotトークンをチャットやスクリーンショットに表示した場合は、すぐに再生成してください。
 
 ## 作者
+
 たいが
 
 ## Special Thanks
-### stさん,chさん,aさん,cさん,sさん
-### 本当にありがとうございます。
+
+### stさん、chさん、aさん、cさん、sさん
+### 本当にありがとうございました
