@@ -4,6 +4,8 @@ import { registerGuildCommands } from "./commandLoader.js";
 export async function handleGuildCreate(guild) {
     console.log(`📌 新しいサーバーに参加しました: ${guild.name} (${guild.id})`);
 
+    await registerGuildCommands(guild);
+
     if (!guild.members.me) {
         console.log("❌ guild.members.me を取得できませんでした");
         return;
@@ -32,5 +34,4 @@ export async function handleGuildCreate(guild) {
         console.log(`✔ ウェルカムメッセージを送信しました: ${guild.name}`);
     }
 
-    await registerGuildCommands(guild);
 }
