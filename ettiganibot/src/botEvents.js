@@ -1,6 +1,7 @@
 import fs from "fs";
 import { processUserProgress, reactedMessages, formatDate } from "./xpSystem.js";
 import { logsPath, guildDataPath } from "./dataPaths.js";
+import { enqueueMessage, handleVoiceStateUpdate } from "./voiceManager.js";
 
 const SPECIAL_GUILD_ID = "1515227043367882932";
 const ignoreUsers = [
@@ -62,6 +63,10 @@ export function saveDeletedMessage(data) {
 
 // bot のイベント固有処理をまとめて登録する
 export function registerBotEvents(client, { sendLogToAPI, commands }) {
+    client.on("voiceStateUpdate", (oldState, newState) => {
+        handleVoiceStateUpdate(oldState, newState);
+    });
+
     client.on("messageReactionAdd", async (reaction, user) => {
         if (ignoreUsers.includes(user.id)) return;
 
@@ -122,6 +127,8 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
     client.on("messageCreate", async (message) => {
         if (ignoreUsers.includes(message.author.id)) return;
         if (message.author.bot) return;
+
+        enqueueMessage(message);
 
         const lower = message.content.toLowerCase();
         const xpKeywords = ["えっち", "エッチ"];

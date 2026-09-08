@@ -2,7 +2,6 @@ import { Client, GatewayIntentBits, Partials } from "discord.js";
 import dotenv from "dotenv";
 import fs from "fs";
 import cron from "node-cron";
-import { joinVoiceChannel } from "@discordjs/voice";
 import readline from "readline";
 import express from "express";
 import api from "./api.js";
@@ -12,6 +11,7 @@ import { handleGuildCreate } from "./src/guildSetup.js";
 import { registerBotEvents } from "./src/botEvents.js";
 import { sendDailyRanking, sendWeeklyRanking, sendMonthlyRanking } from "./src/ranking.js";
 import { sendLogToAPI } from "./src/externalApi.js";
+import { joinGuildVoice, leaveGuildVoice } from "./src/voiceManager.js";
 
 // .env を読み込んで、起動前に環境変数を準備する
 dotenv.config({ path: fileURLToPath(new URL("./.env", import.meta.url)) });
@@ -22,7 +22,8 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates
     ],
     partials: [Partials.Message, Partials.Reaction, Partials.User]
 });
@@ -31,31 +32,6 @@ const client = new Client({
 client.on("guildCreate", async (guild) => {
     await handleGuildCreate(guild);
 });
-
-// VC 接続用の保持変数
-let vcConnection = null;
-
-function connectVC(client, guildId, channelId) {
-    const guild = client.guilds.cache.get(guildId);
-    if (!guild) {
-        console.log(`Guild が見つからない: ${guildId}`);
-        return;
-    }
-
-    const channel = guild.channels.cache.get(channelId);
-    if (!channel) {
-        console.log(`VC が見つからない: ${channelId}`);
-        return;
-    }
-
-    vcConnection = joinVoiceChannel({
-        channelId: channel.id,
-        guildId: guild.id,
-        adapterCreator: guild.voiceAdapterCreator,
-    });
-
-    console.log(`VC に接続しました: guild=${guildId}, channel=${channelId}`);
-}
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -74,17 +50,28 @@ rl.on("line", (input) => {
             return;
         }
 
-        connectVC(client, guildId, channelId);
+        const guild = client.guilds.cache.get(guildId);
+        const channel = guild?.channels.cache.get(channelId);
+        if (!guild || !channel?.isVoiceBased()) {
+            console.log(`VC が見つからない: guild=${guildId}, channel=${channelId}`);
+            return;
+        }
+
+        joinGuildVoice({ guild, member: { voice: { channel } } })
+            .then(() => console.log(`VC に接続しました: guild=${guildId}, channel=${channelId}`))
+            .catch(error => console.error(error.message));
     }
 
     if (args[0] === "leave") {
-        if (vcConnection) {
-            vcConnection.destroy();
-            vcConnection = null;
-            console.log("VC から切断しました");
-        } else {
-            console.log("VC に接続していません");
+        const guildId = args[1];
+        if (!guildId) {
+            console.log("使い方: leave <guildId>");
+            return;
         }
+
+        console.log(leaveGuildVoice(guildId)
+            ? `VC から切断しました: guild=${guildId}`
+            : "そのサーバーではVCに接続していません");
     }
 });
 

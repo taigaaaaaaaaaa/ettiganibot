@@ -91,6 +91,9 @@ copy .env.example .env
 TOKEN=Discord_Bot_Token
 CLI_KEY=任意の長いランダムな文字列
 TARGET_BOT_ID=対象BotのID
+FISH_AUDIO_API_KEY=Fish AudioのAPIキー
+FISH_AUDIO_REFERENCE_ID=使用する音声モデルのReference ID
+FISH_AUDIO_MODEL=s2.1-pro-free
 ```
 
 `TOKEN` は絶対に公開しないでください。漏えいした場合はDeveloper Portalでトークンを再生成します。
@@ -130,7 +133,14 @@ npm run check
 | `/gamertag` | Minecraftゲーマータグ設定 |
 | `/DeletedMessage` | 削除メッセージ表示 |
 | `/setting` | ランキング投稿先を設定（管理者限定） |
+| `/ettigani_join` | 現在いるボイスチャンネルで読み上げを開始 |
+| `/ettigani_leave` | 読み上げを終了してボイスチャンネルから退出 |
 | `/help` | コマンド一覧 |
+| `/balance` | ettigani$の残高を表示 |
+| `/daily` | 1日1回、1000 ettigani$を受け取る |
+| `/slot` | ettigani$を賭けてスロットを回す |
+| `/highlow` | ettigani$を賭けて数字の大小を予想する |
+| `/blackjack` | ettigani$を賭けてブラックジャックをする |
 
 ## CMDからメッセージを送信
 
@@ -166,6 +176,7 @@ broadcast 1行目\n2行目\n3行目
 - `data/setting.json`: サーバーごとのランキング投稿先
 - `data/guilds/<guildId>/DeletedMessage.json`: サーバーごとの削除メッセージ
 - `data/logs/YYYY-MM-DD.log`: キーワード・リアクションログ
+- `data/casino.json`: サーバー・ユーザーごとのettigani$残高とデイリー受取日時
 
 JSONやログはBotの実行中に自動作成・更新されます。バックアップする場合はBotを停止してからコピーしてください。
 
