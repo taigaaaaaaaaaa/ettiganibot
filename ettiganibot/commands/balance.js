@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import { getBalance } from "../src/casinoStore.js";
 import { logCasinoEvent } from "../src/casinoLogger.js";
 
@@ -12,6 +13,6 @@ export async function execute(interaction) {
 
     await interaction.reply({
         content: `💰 あなたの残高は **${balance} ettigani$** です。`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
     });
 }

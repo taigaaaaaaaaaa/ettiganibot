@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import fs from "fs";
 import { readJson, dataPath } from "../src/dataPaths.js";
 
@@ -23,7 +24,7 @@ export async function execute(interaction) {
     if (!gamertags[targetUser.id]) {
         return interaction.reply({
             content: `ごめんね、この鯖にこの機能はまだ実装されてないみたい。\n実装してほしければたいがにゲーマータグを教えてね！追加するから`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -32,6 +33,6 @@ export async function execute(interaction) {
 
     return interaction.reply({
         content: `🎮 <@${targetUser.id}> さんのゲーマータグは **${tag}** です。`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
     });
 }

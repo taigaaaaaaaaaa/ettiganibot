@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import { loadSettings, saveSettings } from "../setting.js";
 
 export const data = {
@@ -20,7 +21,7 @@ export async function execute(interaction) {
     if (!channel.isTextBased()) {
         return interaction.reply({
             content: "テキストチャンネルを選択してください。",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -35,6 +36,6 @@ export async function execute(interaction) {
 
     await interaction.reply({
         content: `✔ ランキング送信チャンネルを **#${channel.name}** に設定しました`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
     });
 }

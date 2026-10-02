@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import fs from "fs";
 import { guildDataPath } from "../src/dataPaths.js";
 
@@ -13,7 +14,7 @@ export async function execute(interaction) {
   if (!fs.existsSync(file)) {
     return interaction.reply({
       content: "このサーバーではまだ削除されたメッセージはありません。",
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 
@@ -22,7 +23,7 @@ export async function execute(interaction) {
   if (!Array.isArray(logs) || logs.length === 0) {
     return interaction.reply({
       content: "このサーバーではまだ削除されたメッセージはありません。",
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 
@@ -32,6 +33,6 @@ export async function execute(interaction) {
 
   await interaction.reply({
     content: text,
-    ephemeral: true
+    flags: MessageFlags.Ephemeral
   });
 }

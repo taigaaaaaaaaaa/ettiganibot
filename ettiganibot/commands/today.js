@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import fs from "fs";
 import { dataPath } from "../src/dataPaths.js";
 
@@ -19,6 +20,6 @@ export async function execute(interaction) {
 
     await interaction.reply({
         content: `📅 **今日の総えっちがに数は ${total} 回です！**`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
     });
 }

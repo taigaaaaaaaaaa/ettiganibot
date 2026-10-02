@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, MessageFlags } from "discord.js";
 
 export const data = {
     name: "help",
@@ -10,6 +10,7 @@ const categories = {
         title: "1. 概要",
         description: [
             "えっちがにbotのコマンド一覧だよ。",
+            "`/ping` Botの応答速度を確認します。",
             "数字のボタンを押すと、カテゴリごとの説明を表示します。",
             "毎日、毎週月曜日、月初めの0:00には、えっちがにトップランカーを送信します。"
         ].join("\n")
@@ -36,9 +37,15 @@ const categories = {
         description: [
             "`/balance` ettigani$の残高を表示します。",
             "`/daily` 1日1回、1000 ettigani$を受け取れます。",
+            "`/shop list` ettigani$で交換できる色ロールと価格を表示します。",
+            "`/shop buy` 商品を選び、ettigani$で色ロールを購入して付与します。",
             "`/slot` ettigani$を賭けてスロットを回します。",
             "`/highlow` 次の数字がHIGHかLOWかを予想します。",
-            "`/blackjack` ettigani$を賭けてブラックジャックをします。"
+            "`/blackjack` ettigani$を賭けてブラックジャックをします。",
+            "`/ura_slot` 1億ettigani$以上を賭ける高リスクの裏スロットです。",
+            "`/ura_dice` 1億ettigani$以上を賭け、ディーラーに2点差以上で勝つと20倍、負けると5倍を失うダイスゲームです。",
+            "通常のスロット・ハイロー・ブラックジャックは最大5,000万ettigani$です。裏ゲームに固定の最大額はありませんが、残高が必要です（裏スロットは最大損失100倍、裏ダイスは5倍）。",
+            "最大掛け金について少し補足。90,071,992,547,409 ettigani$以上を賭けると、計算上の最大損失がJavaScriptのNumber型の限界を超えるため、正しく計算できません。なので、最大掛け金は90,071,992,547,409 ettigani$までにしてください。"
         ].join("\n")
     },
     voice: {
@@ -84,7 +91,7 @@ export async function execute(interaction) {
     await interaction.reply({
         embeds: [createTopEmbed()],
         components: [createTopButtons()],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
     });
 
     const message = await interaction.fetchReply();
@@ -97,7 +104,7 @@ export async function execute(interaction) {
         if (component.user.id !== interaction.user.id) {
             await component.reply({
                 content: "このヘルプを開いた本人だけ操作できます。",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
             return;
         }

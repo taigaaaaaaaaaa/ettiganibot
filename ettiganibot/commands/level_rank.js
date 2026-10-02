@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import fs from "fs";
 import { readJson } from "../src/dataPaths.js";
 
@@ -25,7 +26,7 @@ export async function execute(interaction) {
     if (Object.keys(levels).length === 0) {
         return interaction.reply({
             content: "まだ誰もlevelない！えっちがにしろ！",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -41,7 +42,7 @@ export async function execute(interaction) {
     if (filtered.length === 0) {
         return interaction.reply({
             content: "このサーバーにはまだレベル持ちがいないよ！",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -55,6 +56,6 @@ export async function execute(interaction) {
     // 自分にしか見えないメッセージで返信
     await interaction.reply({
         content: text,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
     });
 }

@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import { claimDaily } from "../src/casinoStore.js";
 import { logCasinoEvent } from "../src/casinoLogger.js";
 
@@ -21,7 +22,7 @@ export async function execute(interaction) {
         logCasinoEvent(interaction, "daily", { 結果: "受取済み" });
         await interaction.reply({
             content: "今日はもう受け取っているよ。明日また来てね。",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
         return;
     }

@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import fs from "fs";
 import { readJson } from "../src/dataPaths.js";
 
@@ -38,6 +39,6 @@ export async function execute(interaction) {
             `👤 <@${userId}> の現在のレベルは **Lv.${level}** です！\n` +
             `次のレベル（Lv.${level + 1}）までに必要なえっちがに数は **あと ${remaining} 回** です！\n` +
             `（現在の累計：${total} 回 / 次のレベル必要値：${nextLevelTotal} 回）`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
     });
 }

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ettiganibot-dashboard</title>
+<style>
+  body {
+    margin: 0;
+    background: #2C2F33;
+    color: white;
+    font-family: "Segoe UI", sans-serif;
+    overflow: hidden;
+  }
+
+  /* ローディング画面 */
+  #loading-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 1s;
+    background: #2C2F33;
+  }
+
+  /* 🦀のアニメーション */
+  .crab {
+    font-size: 70px;
+    animation: moveCrab 0.6s ease-in-out infinite alternate;
+  }
+
+  @keyframes moveCrab {
+    from { transform: translateY(-30px); }
+    to   { transform: translateY(30px); }
+  }
+
+  /* ローディングバー */
+  .loading-box {
+    width: 300px;
+    height: 20px;
+    background: #444;
+    border-radius: 10px;
+    margin-top: 30px;
+    overflow: hidden;
+  }
+
+  .loading-bar {
+    height: 100%;
+    width: 0%;
+    background: #7289DA;
+    transition: width 0.1s linear;
+  }
+
+  .loading-text {
+    margin-top: 20px;
+    font-size: 18px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  /* 切り替え後の画面 */
+  #main-screen {
+    display: none;
+    opacity: 0;
+    transition: opacity 1.2s;
+    padding: 40px;
+    text-align: center;
+  }
+
+  #progress {
+    margin-top: 30px;
+    text-align: left;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- ローディング画面 -->
+<div id="loading-screen">
+  <div class="crab">🦀</div>
+
+  <div class="loading-box">
+    <div class="loading-bar" id="bar"></div>
+  </div>
+
+  <div class="loading-text" id="loading-text">loading.</div>
+</div>
+
+<!-- 切り替え後の画面 -->
+<div id="main-screen">
+  <h1>えっちがにbotの簡易版Webサイトです。</h1>
+  <p>明日から本格的に作り直します。</p>
+  <p>結構思い入れのあるサイトのプログラムが消えてしまったのでかなりショックです。なのでガチります。</p>
+
+  <div id="progress">
+    <p>・進捗を書き込めるスペースです。</p>
+    <p>・現在の進捗は以下の通りです。</p>
+    <ul>
+        <li>2026/09/30: 簡易版作成、最初のloading画面作成。</li>
+        <li>2026/10/01: httpsでサイトを公開。</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  let bar = document.getElementById("bar");
+  let loadingText = document.getElementById("loading-text");
+  let loadingScreen = document.getElementById("loading-screen");
+  let mainScreen = document.getElementById("main-screen");
+
+  let progress = 0;
+
+  /* loading... の「…」アニメーション */
+  let dotCount = 1;
+  let dotTimer = setInterval(() => {
+    dotCount = dotCount % 3 + 1; // 1→2→3→1
+    loadingText.innerHTML = "loading" + ".".repeat(dotCount);
+  }, 400);
+
+  /* ローディングバー進行 */
+  let timer = setInterval(() => {
+    progress += 2;
+    bar.style.width = progress + "%";
+
+    if (progress >= 100) {
+      clearInterval(timer);
+
+      /* loading... のアニメーションを止める */
+      clearInterval(dotTimer);
+
+      /* 固定表示にする */
+      loadingText.innerHTML = "えっちがにbotへようこそ";
+
+      /* 少し待ってからフェードアウト */
+      setTimeout(() => {
+        loadingScreen.style.opacity = 0;
+
+        setTimeout(() => {
+          loadingScreen.style.display = "none";
+          mainScreen.style.display = "block";
+
+          /* 滑らかフェードイン */
+          setTimeout(() => {
+            mainScreen.style.opacity = 1;
+          }, 50);
+
+        }, 1000);
+
+      }, 1200);
+    }
+  }, 70);
+</script>
+
+</body>
+</html>

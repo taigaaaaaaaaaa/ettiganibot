@@ -1,7 +1,8 @@
 import { addCoins, getBalance, placeBet } from "../src/casinoStore.js";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
 import { logCasinoEvent } from "../src/casinoLogger.js";
 
+const MAXIMUM_BET = 50_000_000;
 const suits = ["♠", "♥", "♦", "♣"];
 const ranks = [
     { label: "A", value: 11 },
@@ -86,7 +87,8 @@ export const data = {
             description: "賭けるettigani$",
             type: 4,
             required: true,
-            min_value: 1
+            min_value: 1,
+            max_value: MAXIMUM_BET
         }
     ]
 };
@@ -128,7 +130,7 @@ async function startGame(message, guildId, userId, bet, logContext) {
 
         collector.on("collect", async component => {
             if (component.user.id !== userId) {
-                await component.reply({ content: "このブラックジャックは実行した本人だけ続けられます。", ephemeral: true });
+                await component.reply({ content: "このブラックジャックは実行した本人だけ続けられます。", flags: MessageFlags.Ephemeral });
                 return;
             }
 
@@ -224,7 +226,7 @@ async function startGame(message, guildId, userId, bet, logContext) {
         if (prefix !== "blackjack" || targetUserId !== userId || targetGameId !== gameId) return;
 
         if (component.user.id !== userId) {
-            await component.reply({ content: "このブラックジャックは実行した本人だけ操作できます。", ephemeral: true });
+            await component.reply({ content: "このブラックジャックは実行した本人だけ操作できます。", flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -264,13 +266,13 @@ export async function execute(interaction) {
     const userId = interaction.user.id;
     const guildId = interaction.guildId;
 
-    if (!Number.isSafeInteger(bet) || bet < 1) {
-        await interaction.reply({ content: "ベット額は1以上の整数にしてね。", ephemeral: true });
+    if (!Number.isSafeInteger(bet) || bet < 1 || bet > MAXIMUM_BET) {
+        await interaction.reply({ content: "ベット額は1以上5,000万以下の整数にしてね。", flags: MessageFlags.Ephemeral });
         return;
     }
 
     if (getBalance(guildId, userId) < bet || !placeBet(guildId, userId, bet)) {
-        await interaction.reply({ content: "コインが足りないよ。", ephemeral: true });
+        await interaction.reply({ content: "コインが足りないよ。", flags: MessageFlags.Ephemeral });
         return;
     }
 

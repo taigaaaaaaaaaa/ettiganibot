@@ -11,224 +11,162 @@
 
 ## 機能
 
-- メッセージ内の「えっち」と「🦀」をカウントし、XPとレベルを管理
-- 🦀リアクションへの自動返信
-- キーワードへの自動返信
-- 日間・週間・月間ランキングの自動投稿
-- 削除メッセージの保存と表示
-- Embed形式の全サーバー一括メッセージ送信
-- 指定のチャンネルへのメッセージ送信
-- 指定のボイスチャンネルへの参加
-- キーワード検知とリアクションのテキストログ保存
+- 「えっち」を含むメッセージと 🦀 リアクションをカウントし、レベルを管理
+- キーワードに応じた返信と日付別ログの保存
+- 日間・週間・月間のランキングとettigani$ランキングの自動投稿
+- 削除メッセージの保存と直近5件の表示
+- `/daily` やゲームで使うettigani$、色ロールショップ
+- Fish Audioを使ったボイスチャンネルの読み上げ
+- 起動中のコンソールからチャンネル送信・全サーバーへの告知
+- `CLI_KEY` で保護されたローカルAPI経由のBAN・KICK
 
 ## 必要な環境
 
 - Node.js 20以上
 - npm
-- DiscordとBotトークン
+- DiscordアカウントとDeveloper Portalで作成したBot
 
-Node.jsは公式サイトからインストールしてください。
-
-```text
-https://nodejs.org/
-```
-
-バージョン確認:
+Node.jsは[公式サイト](https://nodejs.org/)からインストールしてください。バージョンは次のコマンドで確認できます。
 
 ```cmd
 node --version
 npm --version
 ```
 
-## Discord側の設定
+## Discord Botの準備
 
-1. Discord Developer PortalでApplicationを作成する
-2. Botを追加してトークンを発行する
-3. `Bot` の `Message Content Intent` を有効にする
-4. OAuth2の招待URLを作成する
-5. Scopesに `bot` と `applications.commands` を指定する
-6. Bot権限に、少なくとも次を指定する
+1. Discord Developer PortalでApplicationを作成し、Botを追加します。
+2. Botのトークンを発行し、`Message Content Intent` を有効にします。
+3. OAuth2の招待URLで `bot` と `applications.commands` のScopeを選びます。
+4. 必要な権限を付けてBotをサーバーへ招待します。
 
-- View Channels
-- Send Messages
-- Embed Links
-- Read Message History
-- Add Reactions
-- Manage Messages（削除メッセージ検知に必要）
+基本の権限は `View Channels`、`Send Messages`、`Embed Links`、`Read Message History` です。機能に応じて追加してください。
 
-`めんどくさかったら管理権限を付与する設定にしてください。私はそうしました。`
+| 権限 | 用途 |
+| --- | --- |
+| `Connect`、`Speak` | ボイスチャンネルでの読み上げ |
+| `Manage Roles` | ショップロールの作成・付与、およびレベル報酬ロールの付与 |
+| `Ban Members`、`Kick Members` | CLIからBAN・KICKを実行 |
 
-## インストール
+Botのロールは、付与する対象ロールより上に配置してください。必要以上に広い権限を付けず、使う機能に必要な権限だけを付与してください。
+
+## インストールと設定
 
 リポジトリのルートから実行します。
 
 ```cmd
 cd ettiganibot
-npm install discord.js@^14.25.1 dotenv@^17.3.1 express@^5.2.1 node-cron@^4.2.1 @discordjs/voice@^0.18.0
-```
-
-主なパッケージ:
-
-| パッケージ | 用途 |
-| --- | --- |
-| `discord.js` | Discord Bot API |
-| `@discordjs/voice` | ボイスチャンネル接続 |
-| `dotenv` | `.env` の読み込み |
-| `express` | CLI用APIサーバー |
-| `node-cron` | 定期ランキング処理 |
-
-## 環境変数
-
-`.env.example` をコピーして `.env` を作成します。
-
-```cmd
+npm install
 copy .env.example .env
 ```
 
-`.env` を編集します。
+`.env` を開いて、利用する機能に必要な値を設定します。
 
-```env
-TOKEN=Discord_Bot_Token
-CLI_KEY=任意の長いランダムな文字列
-TARGET_BOT_ID=対象BotのID
-FISH_AUDIO_API_KEY=Fish AudioのAPIキー
-FISH_AUDIO_REFERENCE_ID=使用する音声モデルのReference ID
-FISH_AUDIO_MODEL=s2.1-pro-free
-```
+| 変数 | 必須条件 | 説明 |
+| --- | --- | --- |
+| `TOKEN` | 必須 | Discord Botのトークン |
+| `CLI_KEY` | CLI APIを使う場合 | CLI API認証用の長くランダムな文字列 |
+| `FISH_AUDIO_API_KEY` | 読み上げを使う場合 | Fish Audio APIキー |
+| `FISH_AUDIO_REFERENCE_ID` | 読み上げを使う場合 | Fish Audioの音声Reference ID |
+| `FISH_AUDIO_MODEL` | 任意 | 音声モデル。省略時は `s2.1-pro-free` |
+| `TARGET_BOT_ID` | 不要 | `.env.example` にありますが、現バージョンでは使用していません |
 
-`TOKEN` は絶対に公開しないでください。漏えいした場合はDeveloper Portalでトークンを再生成します。
+BotトークンやAPIキーをGitHub、チャット、スクリーンショットなどに公開しないでください。トークンが漏れた場合はDeveloper Portalで再生成してください。
 
-## 起動
-
-```cmd
-cd ettiganibot
-node main.js
-```
-
-起動後に `Bot 起動完了` と表示されればログイン成功です。別の方法:
+## 起動と確認
 
 ```cmd
 npm start
-npm run dev
-npm run check
 ```
 
-`npm run dev` はファイル変更時に自動再起動します。`npm run check` は構文チェックです。
+開発時はファイル変更で再起動する `npm run dev` も使えます。`npm run check` は `main.js` の構文のみを確認します。
+
+Botが起動すると、既存サーバーへのスラッシュコマンド登録と、ポート `3000` のCLI APIサーバー起動を行います。新しいサーバーに参加すると、コマンド登録後に初期設定の案内を送信します。ランキング投稿先はサーバー管理者が `/setting` で設定してください。
+
+ランキングは日本時間で、毎日0時に日間・ettigani$ランキング、毎週月曜0時に週間ランキング、毎月1日0時に月間ランキングを投稿します。
 
 ## スラッシュコマンド
 
+### 集計・レベル
+
 | コマンド | 内容 |
 | --- | --- |
-| `/today` | 今日のランキング |
-| `/weekly` | 今週のランキング |
-| `/monthly` | 今月のランキング |
-| `/total` | 累計ランキング |
-| `/my_today` | 自分の今日のカウント |
-| `/my_weekly` | 自分の週間カウント |
-| `/my_monthly` | 自分の月間カウント |
-| `/my_total` | 自分の累計カウント |
-| `/level` | 自分のレベル |
-| `/next_level` | 次のレベルまでの必要数 |
-| `/level_rank` | レベルランキング |
-| `/gamertag` | Minecraftゲーマータグ設定 |
-| `/DeletedMessage` | 削除メッセージ表示 |
-| `/setting` | ランキング投稿先を設定（管理者限定） |
-| `/ettigani_join` | 現在いるボイスチャンネルで読み上げを開始 |
-| `/ettigani_leave` | 読み上げを終了してボイスチャンネルから退出 |
-| `/help` | コマンド一覧 |
-| `/balance` | ettigani$の残高を表示 |
-| `/daily` | 1日1回、1000 ettigani$を受け取る |
-| `/slot` | ettigani$を賭けてスロットを回す |
-| `/highlow` | ettigani$を賭けて数字の大小を予想する |
-| `/blackjack` | ettigani$を賭けてブラックジャックをする |
+| `/today`、`/weekly`、`/monthly`、`/total` | サーバー内メンバーの集計を表示 |
+| `/my_today`、`/my_weekly`、`/my_monthly`、`/my_total` | 自分の集計を表示 |
+| `/level`、`/level_rank`、`/next_level` | レベル、レベルランキング、次のレベルまでの回数を表示 |
+| `/gamertag user:<ユーザー>` | 登録済みのMinecraftゲーマータグを表示 |
+| `/deletedmessage` | サーバーで削除された直近5件を表示 |
+| `/setting channel:<チャンネル>` | ランキング投稿先を設定（サーバー管理者向け） |
+| `/ping`、`/help` | 応答速度、Botのヘルプを表示 |
 
-## CMDからメッセージを送信
+### ettigani$
 
-Bot起動中のCMDへ入力します。
+| コマンド | 内容 |
+| --- | --- |
+| `/balance` | 残高を表示 |
+| `/daily` | 1日1回、1,000 ettigani$を受け取る |
+| `/shop list`、`/shop buy` | 色ロール一覧、色ロールの購入 |
+| `/slot bet:<金額>`、`/highlow bet:<金額> guess:<予想>` | スロット、HIGH/LOWゲーム |
+| `/blackjack bet:<金額>` | ブラックジャック |
+| `/ura_slot bet:<金額>` | 高額ベットの裏スロット |
+| `/ura_dice bet:<金額>` | 高額ベットのダイスゲーム |
 
-特定チャンネルへ送信:
+残高とデイリー受取状況は全サーバー共通です。ゲームにはベット額などの条件があります。実行時に表示される説明を確認してください。
 
-```text
-チャンネルID メッセージ
-```
+### ボイス読み上げ
 
-Embed形式で全サーバーへ送信:
+| コマンド | 内容 |
+| --- | --- |
+| `/ettigani_join` | 自分が参加中のボイスチャンネルで読み上げを開始 |
+| `/ettigani_leave` | 読み上げを終了して退出 |
+
+読み上げにはFish AudioのAPIキーとReference IDが必要です。参加者の入退室と、読み上げ対象ボイスチャンネルと同じカテゴリにあるテキストチャンネルのメッセージを読み上げます。
+
+## コンソール・CLI
+
+Bot起動中のコンソールでは、チャンネルIDとメッセージを入力すると指定チャンネルへ送信できます。全サーバーへの告知は次の形式です。
 
 ```text
 broadcast お知らせです
+broadcast 1行目\n2行目
 ```
 
-改行は `\n` を使います。
+告知は各サーバーで `Send Messages` と `Embed Links` が使えるテキストチャンネルを選びます。送信先のないサーバーはスキップされます。
 
-```text
-broadcast 1行目\n2行目\n3行目
+CLI APIはBotと同時に `http://localhost:3000/api` で起動します。別のコンソールから `ettiganibot` ディレクトリで実行してください。
+
+```cmd
+node cli.js ban <userId> <guildId>
+node cli.js kick <userId> <guildId>
 ```
 
-全サーバーでBotが `SendMessages` と `EmbedLinks` を持つチャンネルが自動選択されます。送信先がないサーバーはスキップされます。
+`.env` の `CLI_KEY` が必要です。APIサーバーをインターネットへ直接公開せず、ファイアウォールなどでアクセス元を制限してください。
 
-## データとログ
+## データとプライバシー
 
-- `data/counts.json`: 日ごとのカウント
-- `data/total.json`: 累計カウント
-- `data/levels.json`: レベル情報
-- `data/weekly.json`: 週間集計
-- `data/monthly.json`: 月間集計
-- `data/setting.json`: サーバーごとのランキング投稿先
-- `data/guilds/<guildId>/DeletedMessage.json`: サーバーごとの削除メッセージ
-- `data/logs/YYYY-MM-DD.log`: キーワード・リアクションログ
-- `data/casino.json`: サーバー・ユーザーごとのettigani$残高とデイリー受取日時
+データは `ettiganibot/data/` にJSONと日付別ログとして保存されます。主なファイルは `counts.json`、`weekly.json`、`monthly.json`、`total.json`、`levels.json`、`casino.json`、`setting.json`、`gamertag.json`、`roleShop.json` です。削除メッセージは `guilds/<guildId>/DeletedMessage.json` にサーバーごとに保存されます。
 
-JSONやログはBotの実行中に自動作成・更新されます。バックアップする場合はBotを停止してからコピーしてください。
+`logs/YYYY-MM-DD.log` にはキーワード検知、メッセージ内容、コマンド実行、ゲーム、ボイスイベントなどが記録されます。ログや保存データを共有・公開する前に、個人情報やメッセージ内容が含まれていないか確認してください。バックアップや移行の際はBotを停止してから `data/` をコピーしてください。
 
-## トラブルシューティング
-
-### `TokenInvalid` が表示される
-
-- `ettiganibot/.env` が存在するか確認する
-- `TOKEN` の名前が正しいか確認する
-- トークン前後に余計な空白や引用符を入れない
-- トークンを再生成した場合は `.env` を更新する
-
-### コマンドが表示されない
-
-- Botを再起動する
-- `applications.commands` scope付きで招待する
-- Botが対象サーバーに参加しているか確認する
-
-### メッセージに反応しない
-
-- `Message Content Intent` を有効にする
-- Botに対象チャンネルの閲覧・送信権限があるか確認する
-- 一部のキーワードは特定サーバー限定です
-
-## フォルダ構成
+## 主な構成
 
 ```text
 .
 ├─ README.md
-├─ .gitignore
+├─ web/
+│  └─ index.html
 └─ ettiganibot/
-	├─ .env.example
-	├─ main.js
-	├─ api.js
-	├─ cli.js
-	├─ commands/
-	├─ src/
-	└─ data/
-		├─ guilds/
-		├─ logs/
-		└─ *.json (json形式で保存したい場合はコード書き換えてくださいね。)
+   ├─ main.js             # Bot起動、定期処理、コンソール送信
+   ├─ api.js / cli.js     # CLI APIとCLIクライアント
+   ├─ commands/           # スラッシュコマンド
+   ├─ src/                # イベント、ランキング、データ、音声処理
+   └─ data/               # 実行時データとログ
 ```
 
-## セキュリティ
+## 作者・Special Thanks
 
-`.env`、Botトークン、`CLI_KEY` はGitHubへ公開しないでください。運用中のBotトークンをチャットやスクリーンショットに表示した場合は、すぐに再生成してください。
+作者: たいが
 
-## 作者
+このBotを作るきっかけになった皆さんへ。本当にありがとうございました。あなた達がいなければ今の私はいませんでした。
 
-たいが
-
-## Special Thanks
-
-### stさん、chさん、aさん、cさん、sさん
-### 本当にありがとうございました
+stさん、chさん、aさん、cさん、sさん。本当にありがとうございました。

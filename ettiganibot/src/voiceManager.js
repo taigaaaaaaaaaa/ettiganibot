@@ -74,7 +74,7 @@ export async function joinGuildVoice(interaction) {
     const guildId = interaction.guild.id;
     const remainingCooldown = (joinCooldowns.get(guildId) || 0) + JOIN_COOLDOWN_MS - Date.now();
     if (remainingCooldown > 0) {
-        const remainingSeconds = Math.ceil(remainingCooldown / 1000);
+        const remainingSeconds = Math.ceil(remainingCooldown / 500);
         throw new Error(`再接続のクールタイム中です。あと${remainingSeconds}秒待ってください。`);
     }
     if (voiceStates.has(guildId)) {
@@ -167,9 +167,9 @@ export function handleVoiceStateUpdate(oldState, newState) {
     const isBot = member?.user?.bot;
 
     if (!isBot && !wasInTarget && isInTarget) {
-        enqueueVoiceText(newState.guild.id, `${getMemberName(member)}が参加しました`);
+        enqueueVoiceText(newState.guild.id, `${getMemberName(member)}さんが参加しました`);
     } else if (!isBot && wasInTarget && !isInTarget) {
-        enqueueVoiceText(newState.guild.id, `${getMemberName(member)}が退出しました`);
+        enqueueVoiceText(newState.guild.id, `${getMemberName(member)}さんが退出しました`);
     }
 
     const targetChannel = newState.guild.channels.cache.get(state.channelId);
@@ -184,7 +184,7 @@ export function handleVoiceStateUpdate(oldState, newState) {
 
 function getMemberName(member) {
     const name = cleanText(member?.displayName || member?.user?.username || "ユーザー");
-    return name.slice(0, MAX_READ_LENGTH - "が参加しました".length);
+    return name.slice(0, MAX_READ_LENGTH - "さんが参加しました".length);
 }
 
 function cleanText(text) {
@@ -195,7 +195,8 @@ function cleanText(text) {
 
 export function enqueueMessage(message) {
     const state = getState(message.guild?.id);
-    if (!state || state.channelId !== message.member?.voice?.channelId) return;
+    const voiceChannel = message.guild?.channels.cache.get(state?.channelId);
+    if (!state || !voiceChannel?.parentId || voiceChannel.parentId !== message.channel?.parentId) return;
 
     const normalizedContent = cleanText(message.content);
     const shortenedContent = normalizedContent.length > MAX_READ_LENGTH

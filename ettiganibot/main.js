@@ -10,6 +10,7 @@ import { commands, loadCommands, registerGuildCommands } from "./src/commandLoad
 import { handleGuildCreate } from "./src/guildSetup.js";
 import { registerBotEvents } from "./src/botEvents.js";
 import { sendDailyRanking, sendWeeklyRanking, sendMonthlyRanking } from "./src/ranking.js";
+import { sendCasinoRanking } from "./src/casinoRanking.js";
 import { sendLogToAPI } from "./src/externalApi.js";
 import { joinGuildVoice, leaveGuildVoice } from "./src/voiceManager.js";
 
@@ -98,17 +99,20 @@ app.listen(3000, () => {
 });
 
 // 毎日 / 毎週 / 毎月のランキングを自動投稿
+const cronOptions = { timezone: "Asia/Tokyo" };
+
 cron.schedule("0 0 * * *", async () => {
     await sendDailyRanking(client);
-});
+    await sendCasinoRanking(client);
+}, cronOptions);
 
 cron.schedule("0 0 * * 1", async () => {
     await sendWeeklyRanking(client);
-});
+}, cronOptions);
 
 cron.schedule("0 0 1 * *", async () => {
     await sendMonthlyRanking(client);
-});
+}, cronOptions);
 
 // テスト用の高速メッセージ送信用
 function sendToChannel(channelId, message) {

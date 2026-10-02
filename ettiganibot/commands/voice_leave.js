@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import { leaveGuildVoice } from "../src/voiceManager.js";
 
 export const data = {
@@ -7,7 +8,7 @@ export const data = {
 
 export async function execute(interaction) {
     if (!interaction.guild) {
-        await interaction.reply({ content: "サーバー内で使用してください。", ephemeral: true });
+        await interaction.reply({ content: "サーバー内で使用してください。", flags: MessageFlags.Ephemeral });
         return;
     }
 
