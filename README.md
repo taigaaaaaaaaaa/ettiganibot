@@ -9,6 +9,18 @@
 
 本当にこのbotには私の思い出が詰まってます。よかったら使ってください。
 
+## 目次
+
+- [機能](#機能)
+- [必要な環境](#必要な環境)
+- [Discord Botの準備](#discord-botの準備)
+- [インストールと設定](#インストールと設定)
+- [起動と確認](#起動と確認)
+- [スラッシュコマンド](#スラッシュコマンド)
+- [データとプライバシー](#データとプライバシー)
+- [ランキングWebポータル](#ランキングwebポータル)
+- [デプロイ手順](DEPLOYMENT.md)
+
 ## 機能
 
 - 「えっち」を含むメッセージと 🦀 リアクションをカウントし、レベルを管理
@@ -19,6 +31,7 @@
 - Fish Audioを使ったボイスチャンネルの読み上げ
 - 起動中のコンソールからチャンネル送信・全サーバーへの告知
 - `CLI_KEY` で保護されたローカルAPI経由のBAN・KICK
+- CLI APIからBotが参加しているサーバー名とIDを表示
 
 ## 必要な環境
 
@@ -136,11 +149,14 @@ broadcast 1行目\n2行目
 CLI APIはBotと同時に `http://localhost:3000/api` で起動します。別のコンソールから `ettiganibot` ディレクトリで実行してください。
 
 ```cmd
+node cli.js servers
 node cli.js ban <userId> <guildId>
 node cli.js kick <userId> <guildId>
 ```
 
 `.env` の `CLI_KEY` が必要です。APIサーバーをインターネットへ直接公開せず、ファイアウォールなどでアクセス元を制限してください。
+
+`servers` はBotが参加しているサーバー名とIDを表示します。
 
 ## データとプライバシー
 
@@ -162,6 +178,12 @@ node cli.js kick <userId> <guildId>
    ├─ src/                # イベント、ランキング、データ、音声処理
    └─ data/               # 実行時データとログ
 ```
+
+## ランキングWebポータル
+
+Next.js版のサイト仕様・ランキングデータの扱い・Docker Composeでの公開手順は[web/README.md](web/README.md)を参照してください。WebサイトはBotのJSONを読み取り専用で利用します。
+
+Ubuntuでの起動・更新手順をすぐ確認する場合は[DEPLOYMENT.md](DEPLOYMENT.md)を参照してください。
 
 ## 作者・Special Thanks
 
