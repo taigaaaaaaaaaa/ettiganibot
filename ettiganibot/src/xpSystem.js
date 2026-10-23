@@ -1,5 +1,6 @@
 import fs from "fs";
 import { dataPath, readJson, writeJson } from "./dataPaths.js";
+import { incrementGuildCount } from "./guildRankingStore.js";
 
 // 同じメッセージに対する重複反応を防ぐセット
 export const reactedMessages = new Set();
@@ -38,6 +39,8 @@ export function formatDate() {
 
 // 1ユーザーのメッセージ数とレベル進行を管理する
 export async function processUserProgress(message) {
+    incrementGuildCount(message.guild?.id, message.author.id);
+
     const counts = loadCounts();
     counts[message.author.id] = (counts[message.author.id] || 0) + 1;
     saveCounts(counts);

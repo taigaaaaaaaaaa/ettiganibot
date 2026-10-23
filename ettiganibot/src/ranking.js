@@ -1,46 +1,45 @@
 import fs from "fs";
 import { loadSettings } from "../setting.js";
 import { dataPath, readJson, writeJson } from "./dataPaths.js";
+import { resetCasinoMonthly, resetCasinoWeekly, rolloverCasinoDaily } from "./casinoStore.js";
+import { createRankingEmbed } from "./rankingEmbed.js";
+import { resetGuildRankingPeriod, rolloverGuildRankingDay } from "./guildRankingStore.js";
+import { getRankingChannel } from "./rankingChannel.js";
 
 // 毎日 0:00 に総合ランキングを投稿する
 export async function sendDailyRanking(client) {
     try {
         const settings = loadSettings();
 
-        for (const guildId of Object.keys(settings)) {
-            const RANK_CHANNEL = settings[guildId]?.rank_channel;
-            if (!RANK_CHANNEL) {
-                console.log(`デイリー：${guildId} はチャンネル未設定`);
-                continue;
-            }
-
-            const channel = await client.channels.fetch(RANK_CHANNEL).catch(() => null);
+        for (const guild of client.guilds.cache.values()) {
+            const guildId = guild.id;
+            const channel = await getRankingChannel(client, guild, settings);
             if (!channel) {
-                console.log(`デイリー：${guildId} のチャンネルが見つからない`);
+                console.log(`デイリー：${guildId} の送信先が見つからない`);
                 continue;
             }
 
             let counts = readJson("counts.json", {});
 
-            const guildMembers = channel.guild.members.cache;
             const filtered = Object.entries(counts)
-                .filter(([userId]) => guildMembers.has(userId))
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
 
             if (filtered.length === 0) {
-                channel.send("今日のランキングはデータがありませんでした。");
+                await channel.send({
+                    embeds: [createRankingEmbed("今日のえっちがにランキング(全サーバ)", ["ランキングデータはありませんでした。"])]
+                });
                 continue;
             }
 
-            let text = "# 今日のえっちがにランキング\n\n";
+            const lines = [];
             for (let i = 0; i < filtered.length; i++) {
                 const [userId, xp] = filtered[i];
                 const user = await client.users.fetch(userId);
-                text += `${i + 1}位 ${user.username}（${xp}回）\n`;
+                lines.push(`${i + 1}位 ${user.username}（${xp}回）`);
             }
 
-            channel.send(text);
+            await channel.send({ embeds: [createRankingEmbed("今日のえっちがにランキング(全サーバ)", lines)] });
         }
 
         let weekly = readJson("weekly.json", {});
@@ -55,6 +54,8 @@ export async function sendDailyRanking(client) {
         writeJson("weekly.json", weekly);
         writeJson("monthly.json", monthly);
         writeJson("counts.json", {});
+        rolloverGuildRankingDay();
+        rolloverCasinoDaily();
     } catch (err) {
         console.error("デイリーランキングエラー:", err);
     }
@@ -65,37 +66,40 @@ export async function sendWeeklyRanking(client) {
     try {
         const settings = loadSettings();
 
-        for (const guildId of Object.keys(settings)) {
-            const RANK_CHANNEL = settings[guildId]?.rank_channel;
-            if (!RANK_CHANNEL) continue;
-
-            const channel = await client.channels.fetch(RANK_CHANNEL).catch(() => null);
-            if (!channel) continue;
+        for (const guild of client.guilds.cache.values()) {
+            const guildId = guild.id;
+            const channel = await getRankingChannel(client, guild, settings);
+            if (!channel) {
+                console.log(`週間：${guildId} の送信先が見つからない`);
+                continue;
+            }
 
             let weekly = readJson("weekly.json", {});
 
-            const guildMembers = channel.guild.members.cache;
             const filtered = Object.entries(weekly)
-                .filter(([userId]) => guildMembers.has(userId))
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
 
             if (filtered.length === 0) {
-                channel.send("今週のランキングはデータがありませんでした。");
+                await channel.send({
+                    embeds: [createRankingEmbed("今週のえっちがにランキング(全サーバ)", ["ランキングデータはありませんでした。"])]
+                });
                 continue;
             }
 
-            let text = "# 今週のえっちがにランキング\n\n";
+            const lines = [];
             for (let i = 0; i < filtered.length; i++) {
                 const [userId, xp] = filtered[i];
                 const user = await client.users.fetch(userId);
-                text += `${i + 1}位 ${user.username}（${xp}回）\n`;
+                lines.push(`${i + 1}位 ${user.username}（${xp}回）`);
             }
 
-            channel.send(text);
+            await channel.send({ embeds: [createRankingEmbed("今週のえっちがにランキング(全サーバ) ", lines)] });
         }
 
         writeJson("weekly.json", {});
+        resetGuildRankingPeriod("weekly");
+        resetCasinoWeekly();
     } catch (err) {
         console.error("週間ランキングエラー:", err);
     }
@@ -106,37 +110,40 @@ export async function sendMonthlyRanking(client) {
     try {
         const settings = loadSettings();
 
-        for (const guildId of Object.keys(settings)) {
-            const RANK_CHANNEL = settings[guildId]?.rank_channel;
-            if (!RANK_CHANNEL) continue;
-
-            const channel = await client.channels.fetch(RANK_CHANNEL).catch(() => null);
-            if (!channel) continue;
+        for (const guild of client.guilds.cache.values()) {
+            const guildId = guild.id;
+            const channel = await getRankingChannel(client, guild, settings);
+            if (!channel) {
+                console.log(`月間：${guildId} の送信先が見つからない`);
+                continue;
+            }
 
             let monthly = readJson("monthly.json", {});
 
-            const guildMembers = channel.guild.members.cache;
             const filtered = Object.entries(monthly)
-                .filter(([userId]) => guildMembers.has(userId))
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
 
             if (filtered.length === 0) {
-                channel.send("今月のランキングはデータがありませんでした。");
+                await channel.send({
+                    embeds: [createRankingEmbed("今月のえっちがにランキング(全サーバ)", ["ランキングデータはありませんでした。"])]
+                });
                 continue;
             }
 
-            let text = "# 今月のえっちがにランキング\n\n";
+            const lines = [];
             for (let i = 0; i < filtered.length; i++) {
                 const [userId, xp] = filtered[i];
                 const user = await client.users.fetch(userId);
-                text += `${i + 1}位 ${user.username}（${xp}回）\n`;
+                lines.push(`${i + 1}位 ${user.username}（${xp}回）`);
             }
 
-            channel.send(text);
+            await channel.send({ embeds: [createRankingEmbed("今月のえっちがにランキング(全サーバ)", lines)] });
         }
 
         writeJson("monthly.json", {});
+        resetGuildRankingPeriod("monthly");
+        resetCasinoMonthly();
     } catch (err) {
         console.error("月間ランキングエラー:", err);
     }

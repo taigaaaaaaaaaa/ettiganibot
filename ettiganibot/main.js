@@ -8,6 +8,7 @@ import api from "./api.js";
 import { fileURLToPath } from "url";
 import { commands, loadCommands, registerGuildCommands } from "./src/commandLoader.js";
 import { handleGuildCreate } from "./src/guildSetup.js";
+import { syncGuildRegistry } from "./src/guildRegistry.js";
 import { registerBotEvents } from "./src/botEvents.js";
 import { sendDailyRanking, sendWeeklyRanking, sendMonthlyRanking } from "./src/ranking.js";
 import { sendCasinoRanking } from "./src/casinoRanking.js";
@@ -23,6 +24,7 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildVoiceStates
     ],
@@ -32,6 +34,11 @@ const client = new Client({
 // 新しいサーバーに入ったときは、welcome メッセージと guild コマンド登録を行う
 client.on("guildCreate", async (guild) => {
     await handleGuildCreate(guild);
+    syncGuildRegistry(client.guilds.cache.values());
+});
+
+client.on("guildDelete", () => {
+    syncGuildRegistry(client.guilds.cache.values());
 });
 
 const rl = readline.createInterface({
@@ -86,6 +93,7 @@ client.once("ready", async () => {
     for (const guild of client.guilds.cache.values()) {
         await registerGuildCommands(guild);
     }
+    syncGuildRegistry(client.guilds.cache.values());
 });
 
 
@@ -102,8 +110,8 @@ app.listen(3000, () => {
 const cronOptions = { timezone: "Asia/Tokyo" };
 
 cron.schedule("0 0 * * *", async () => {
-    await sendDailyRanking(client);
     await sendCasinoRanking(client);
+    await sendDailyRanking(client);
 }, cronOptions);
 
 cron.schedule("0 0 * * 1", async () => {

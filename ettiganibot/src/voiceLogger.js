@@ -23,4 +23,5 @@ export function logVoiceEvent(event, details = {}) {
     ];
 
     fs.appendFileSync(getLogPath(), `${lines.join("\n")}\n`, "utf8");
+    return timestamp;
 }

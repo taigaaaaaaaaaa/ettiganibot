@@ -1,0 +1,35 @@
+services:
+  web:
+    build:
+      context: ${WEB_BUILD_CONTEXT:-./web}
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      BOT_DATA_DIR: /app/bot-data
+      ANNOUNCEMENTS_FILE: /app/site-data/announcements.json
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+    volumes:
+      - ${BOT_DATA_HOST_PATH:-./ettiganibot/data}:/app/bot-data:ro
+      - ${ANNOUNCEMENTS_HOST_PATH:-./web/app/data/announcements.json}:/app/site-data/announcements.json:ro
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/statistics').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+

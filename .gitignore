@@ -4,11 +4,25 @@ package-lock.json
 
 # Environment
 .env
+.env.site
 
-# Bot runtime data
-ettiganibot/data/guilds
-ettiganibot/data/package.json
+# Runtime data
+ettiganibot/data/logs/**
+!ettiganibot/data/logs/.gitkeep
+
+ettiganibot/data/guilds/**
+!ettiganot/data/guilds/
+!ettiganibot/data/guilds/.gitkeep
+
+ettiganibot/data/guilds.json
+ettiganibot/data/tts-settings.json
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Next.js web portal
+web/node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts

@@ -1,0 +1,212 @@
+[
+  {
+    "name": "balance",
+    "description": "ettigani$の残高を表示します",
+    "options": []
+  },
+  {
+    "name": "blackjack",
+    "description": "ettigani$を賭けてブラックジャックをします",
+    "options": [
+      {
+        "name": "bet",
+        "description": "賭けるettigani$",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "daily",
+    "description": "1日1回、1000 ettigani$を受け取ります",
+    "options": []
+  },
+  {
+    "name": "deletedmessage",
+    "description": "このサーバーで削除された直近5件を表示します",
+    "options": []
+  },
+  {
+    "name": "ura_dice",
+    "description": "最低1億。ディーラーに2点差以上で勝つと20倍、負けると5倍のダイスゲーム。",
+    "options": [
+      {
+        "name": "bet",
+        "description": "賭けるettigani$（最低1億）",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "gamertag",
+    "description": "サーバーのメンバーのゲーマータグを確認します",
+    "options": [
+      {
+        "name": "user",
+        "description": "誰のゲーマータグを表示しますか？",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "help",
+    "description": "かにbotの説明を見ることができます",
+    "options": []
+  },
+  {
+    "name": "highlow",
+    "description": "次の数字が高いか低いかを予想します",
+    "options": [
+      {
+        "name": "bet",
+        "description": "賭けるettigani$",
+        "options": []
+      },
+      {
+        "name": "guess",
+        "description": "次の数字が高いか低いか",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "level_rank",
+    "description": "レベルランキングを表示します",
+    "options": []
+  },
+  {
+    "name": "level",
+    "description": "あなたのレベルを表示します",
+    "options": []
+  },
+  {
+    "name": "monthly",
+    "description": "今月の総えっちがに数を表示します",
+    "options": []
+  },
+  {
+    "name": "my_monthly",
+    "description": "今月の自分のえっちがに数を表示します",
+    "options": []
+  },
+  {
+    "name": "my_today",
+    "description": "今日の自分のえっちがに数を表示します",
+    "options": []
+  },
+  {
+    "name": "my_total",
+    "description": "あなたの累計えっちがに数を表示します",
+    "options": []
+  },
+  {
+    "name": "my_weekly",
+    "description": "今週の自分のえっちがに数を表示します",
+    "options": []
+  },
+  {
+    "name": "next_level",
+    "description": "次のレベルまであと何回かを表示します",
+    "options": []
+  },
+  {
+    "name": "ping",
+    "description": "botの応答速度を確認します",
+    "options": []
+  },
+  {
+    "name": "setting",
+    "description": "ランキング送信チャンネルを設定します",
+    "options": [
+      {
+        "name": "channel",
+        "description": "ランキングを送信するチャンネルを選択してください",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "shop",
+    "description": "ettigani$で色ロールを交換します",
+    "options": [
+      {
+        "name": "list",
+        "description": "交換できる色ロールを表示します",
+        "options": []
+      },
+      {
+        "name": "buy",
+        "description": "色ロールを購入して付与します",
+        "options": [
+          {
+            "name": "item",
+            "description": "購入する色ロール",
+            "options": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "slot",
+    "description": "ettigani$を賭けてスロットを回します",
+    "options": [
+      {
+        "name": "bet",
+        "description": "賭けるettigani$",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "today",
+    "description": "今日の総えっちがに数を表示します",
+    "options": []
+  },
+  {
+    "name": "total",
+    "description": "累計のえっちがに数を表示します",
+    "options": []
+  },
+  {
+    "name": "tts-set",
+    "description": "自分の読み上げ速度とピッチを設定します",
+    "options": [
+      {
+        "name": "speed",
+        "description": "読み上げ速度 (0.5〜2.0)",
+        "options": []
+      },
+      {
+        "name": "pitch",
+        "description": "声の高さ (0.5〜2.0)",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "ura_slot",
+    "description": "最低1億ettigani$から回せる裏スロットです",
+    "options": [
+      {
+        "name": "bet",
+        "description": "賭けるettigani$（最低1億）",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "ettigani_join",
+    "description": "現在いるボイスチャンネルで読み上げを開始します",
+    "options": []
+  },
+  {
+    "name": "ettigani_leave",
+    "description": "読み上げを終了してボイスチャンネルから退出します",
+    "options": []
+  },
+  {
+    "name": "weekly",
+    "description": "今週の総えっちがに数を表示します",
+    "options": []
+  }
+]

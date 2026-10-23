@@ -11,6 +11,16 @@ export default (client) => {
     next();
   });
 
+  // Bot が参加しているサーバー一覧
+  router.post("/guilds", (req, res) => {
+    const guilds = [...client.guilds.cache.values()].map(guild => ({
+      id: guild.id,
+      name: guild.name
+    }));
+
+    res.json({ ok: true, guilds });
+  });
+
   // BAN
   router.post("/ban", async (req, res) => {
     const { guildId, userId } = req.body;
@@ -43,4 +53,3 @@ export default (client) => {
 
   return router;
 };
-
