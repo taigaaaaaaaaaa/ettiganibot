@@ -10,6 +10,7 @@ const links = [
   { href: "/ranking", label: "ランキング" },
   { href: "/global-ranking", label: "グローバルランキング" },
   { href: "/statistics", label: "統計" },
+  { href: "/server-monitor", label: "サーバー監視" },
   { href: "/commands", label: "コマンド一覧" },
   { href: "/terms", label: "利用規約" },
   { href: "/privacy", label: "プライバシー" },

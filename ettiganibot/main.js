@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Partials } from "discord.js";
+import { Client, GatewayIntentBits, Partials, ActivityType } from "discord.js";
 import dotenv from "dotenv";
 import fs from "fs";
 import cron from "node-cron";
@@ -94,6 +94,55 @@ client.once("ready", async () => {
         await registerGuildCommands(guild);
     }
     syncGuildRegistry(client.guilds.cache.values());
+    // status画面に総えっちがに数、導入サーバー数、Ping値を表示する
+    const totalJsonPath = fileURLToPath(new URL("./data/total.json", import.meta.url));
+
+    function getTotalCount() {
+        try {
+            const raw = fs.readFileSync(totalJsonPath, "utf8");
+            if (!raw.trim()) {
+                return 0;
+            }
+
+            const parsed = JSON.parse(raw);
+            if (typeof parsed === "number") {
+                return parsed;
+            }
+            if (typeof parsed === "string") {
+                return Number(parsed) || 0;
+            }
+            if (Array.isArray(parsed)) {
+                return parsed.reduce((sum, value) => sum + (Number(value) || 0), 0);
+            }
+            if (parsed && typeof parsed === "object") {
+                return Object.values(parsed).reduce((sum, value) => sum + (Number(value) || 0), 0);
+            }
+            return 0;
+        } catch (error) {
+            console.error("総えっちがに数の取得に失敗しました:", error.message);
+            return 0;
+        }
+    }
+
+    async function updatePresence() {
+        try {
+            await client.user.setPresence({
+                activities: [{
+                    name: `🦀総えっちがに数 ${getTotalCount().toLocaleString()}！ | 🐟${client.guilds.cache.size.toLocaleString()}サーバーに導入中 | 📈Ping ${client.ws.ping}ms | 👀/help`,
+                    type: ActivityType.Watching
+                }],
+                status: "online"
+            });
+        } catch (error) {
+            console.error("Presence 更新に失敗しました:", error.message);
+        }
+    }
+
+    updatePresence();
+
+    setInterval(() => {
+        updatePresence();
+    }, 1000);
 });
 
 
