@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Globe2, Trophy } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Globe2, MessageCircle, Trophy } from "lucide-react";
 import { getDefaultAvatar } from "@/lib/discord";
 import { getRankings } from "@/lib/rankings";
 import { getAnnouncementLink, getAnnouncements } from "@/lib/announcements";
@@ -31,15 +31,25 @@ export default async function HomePage({ searchParams }) {
     <>
       <RankingDataLoader preloadRankings />
       <section aria-labelledby="welcome-title" className="home-welcome">
-        <p className="eyebrow">このサイトについて</p>
+        <p className="eyebrow">えっちがにbot · DISCORD BOT</p>
         <h1 className="welcome-title" id="welcome-title">
-          えっちがにbotの公式サイトへようこそ！
+          えっちがにbotをDiscordに追加しよう！
         </h1>
         <p className="page-lead">
-          たいがが作ったえっちがにbotの公式サイトです！！
-          このサイトでは、えっちがにbotが記録したランキングや統計、ユーザーごとの活動状況を確認できます！
-          このサイト、マジで死ぬほど頑張って作りました。マジで隅々まで見てほしい。
+          サーバーに招待して、みんなで遊ぼう！
+          このサイトでは、えっちがにbotが記録したランキングや統計、ユーザーごとの活動状況も確認できます。
         </p>
+        <a
+          className="invite-cta"
+          href="https://discord.com/oauth2/authorize?client_id=1516404704421220543"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <MessageCircle aria-hidden="true" size={22} />
+          <span>Discordに招待する</span>
+          <ArrowUpRight aria-hidden="true" className="invite-cta-arrow" size={18} />
+        </a>
+        <p className="invite-note">無料で追加できます · Discordの認証ページが開きます</p>
         <div className="home-actions">
           <Link className="action-link primary" href="/ranking">
             <Trophy aria-hidden="true" size={17} />

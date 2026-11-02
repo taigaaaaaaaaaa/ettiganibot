@@ -207,40 +207,77 @@ if (susuruKeywords.some((word) => lower.includes(word.toLowerCase()))) {
   return;
 }
 
+const noXPKeywords = ["テルマニア", "てるまにあ"];
+if (noXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+  console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
+  writeKeywordLog(message, "テルマニア");
 
-    const noXPKeywords = ["テルマニア"];
-    if (noXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
-      console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
-      writeKeywordLog(message, "テルマニア");
-      await message.reply("えっちだに...");
-      return;
-    }
+  const noXPReplies = [
+    "えっちだに...",
+    "テルマニアさん大好きだよはーと",
+  ];
 
-    const secondnoXPKeywords = ["あまのじゃむ", "リア充"];
-    if (secondnoXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
-      console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
-      writeKeywordLog(message, "あまのじゃむ / リア充");
-      await message.reply("リア充はタンスの角に足の小指ぶつけろ！！\n-# 僕らの分まで幸せになれよ;;");
-      return;
-    }
+  const rareReply =
+    "えっちだに...\n# これを引いたあなたはテルマニア君にひとつお願いをしてもよいこととする。*なんでも*いいらしいよ。\n-# 排出率1%のメッセージです。おめでとう！！";
 
-    const chocoKeywords = ["チョコch", "チョコさん"];
-    if (chocoKeywords.some((word) => lower.includes(word.toLowerCase()))) {
-      console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
-      writeKeywordLog(message, "チョコch / チョコさん");
+  const rareChance = 0.01;
 
-      const chocoReplies = [
-        "チョコchって変態カカオ豆だよね（？）",
-        "チョコさんってロリコンだよね",
-      ];
+  const pick =
+    Math.random() < rareChance
+      ? rareReply
+      : noXPReplies[Math.floor(Math.random() * noXPReplies.length)];
 
-      const rareReply = "変態カカオ豆とロリコン両立させてるのってすごいよねチョコch\n-# 排出率1%のメッセージです。おめでとう！！";
+  await message.reply(pick);
+  return;
+}
 
-      const rareChance = 0.01;
-      const pick = Math.random() < rareChance ? rareReply : chocoReplies[Math.floor(Math.random() * chocoReplies.length)];
-      await message.reply(pick);
-      return;
-    }
+const secondnoXPKeywords = ["あまのじゃむ", "リア充"];
+if (secondnoXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+  console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
+  writeKeywordLog(message, "あまのじゃむ / リア充");
+
+  const secondnoXPReplies = [
+    "リア充はタンスの角に足の小指ぶつけろ！！",
+    "僕らの分まで幸せになれよ;;",
+  ];
+
+  const rareReply =
+    "\n-# 排出率1%のメッセージです。おめでとう！！";
+
+  const rareChance = 0.01;
+
+  const pick =
+    Math.random() < rareChance
+      ? rareReply
+      : secondnoXPReplies[Math.floor(Math.random() * secondnoXPReplies.length)];
+
+  await message.reply(pick);
+  return;
+}
+
+const chocoKeywords = ["チョコch", "チョコさん"];
+if (chocoKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+  console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
+  writeKeywordLog(message, "チョコch / チョコさん");
+
+  const chocoReplies = [
+    "チョコchって変態カカオ豆だよね（？）",
+    "チョコさんってロリコンだよね",
+  ];
+
+  const rareReply =
+    "変態カカオ豆とロリコン両立させてるのってすごいよねチョコch\n-# 排出率1%のメッセージです。おめでとう！！";
+
+  const rareChance = 0.01;
+
+  const pick =
+    Math.random() < rareChance
+      ? rareReply
+      : chocoReplies[Math.floor(Math.random() * chocoReplies.length)];
+
+  await message.reply(pick);
+  return;
+}
 
   });
 
