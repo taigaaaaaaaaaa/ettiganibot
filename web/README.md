@@ -31,7 +31,7 @@
 
 ## 4. サイト要件
 
-ホーム、ランキング、グローバルランキングを主導線とします。共通ナビ、モバイルメニュー、レスポンシブYouTube動画、ランキング期間選択、Guild絞り込み、ユーザー詳細、統計、検索可能なコマンド一覧、利用規約、プライバシーポリシーを実装しています。
+ホーム、ランキング、コミュニティを主導線とします。共通ナビ、モバイルメニュー、レスポンシブYouTube動画、ランキング期間選択、Guild絞り込み、ユーザー詳細、コミュニティ投稿・開発者ノート、ユーザー／サーバーページ、統計、検索可能なコマンド一覧、利用規約、プライバシーポリシーを実装しています。
 
 全コードはJavaScriptです。TypeScript、`.ts`、`.tsx`、型定義は導入していません。
 
@@ -40,7 +40,10 @@
 - ホーム: 歓迎見出し、お知らせ、YouTube動画の順に表示し、指定された「エッチ😍な蟹🦀、４選‼️‼️」も改行込みで掲載。その下に累計トップとランキング導線を配置。
 - ランキング: えっちがに数とettigani$（今日・週間・月間・累計）の切り替え。ettigani$の日・週・月は獲得額から消費額を引いた純増減、累計は現在残高。任意Guildの現在メンバーによる絞り込み、50件ごとのページ送り。
 - グローバルランキング: 順位、Discordアイコン、表示名、所属Guild、レベル、スコア。
-- ユーザー詳細: Discord ID、表示名、レベル、今日・今週・今月・累計、グローバル順位、選択Guild順位。
+- ユーザー詳細: Discord ID、表示名、レベル、Bot統計、投稿一覧、人気投稿、獲得いいね数。
+- コミュニティ: Discordログイン、カテゴリー／タグ付き投稿、サムネイル、全体／サーバー限定公開、いいね、コメント、保存、ランキング。
+- 開発者ノート: 公開記事は`app/data/dev-notes.json`へ保存し、管理者は`/admin/devnotes`でMarkdown記事の作成・編集・公開設定を管理。
+- マイページ／サーバー: Bot統計、投稿履歴、アカウント設定、Bot導入サーバーごとのコミュニティページ。
 - 統計: 累計総数、ユーザー数、Bot登録Guild数、累計から再計算したレベル分布。
 - コマンド一覧: Botソースから生成した説明とオプションの検索。
 
@@ -70,7 +73,7 @@
 
 実装済み: Next.js App Router、JavaScript、Tailwind CSS v4、pnpm、ESLint、Prettier、Discordプロフィール取得、読み取り専用JSON API、Guild一覧記録、Docker/Compose、Nginx、Cloudflare Tunnel。
 
-将来のOAuth2・管理画面・認証付きAPI・ランキング履歴は`app/api/`と`lib/`の境界に追加できます。現状の公開ランキングAPIには認証を設けていないため、個人データや管理操作を追加する場合は認証・権限設計を先に行ってください。
+Discord OAuth2認証、認証付き投稿API、サーバーメンバーシップ確認を実装しています。公開ランキングAPIは引き続き公開情報のみを返します。コミュニティのJSON保存方式は単一Webプロセス向けであり、複数プロセスに拡張するときは共有データベースへ移行してください。
 
 ## 8. ソースコード
 
@@ -98,21 +101,50 @@ Docker運用ではこのJSONを`ANNOUNCEMENTS_HOST_PATH`で指定したホスト
 
 Guild登録一覧はBot起動時とGuild参加・退出時に`ettiganibot/data/guilds.json`へ保存します。Discord Developer PortalでPrivileged Gateway Intentsの`Server Members Intent`を有効にし、Botを再起動してください。Webの`DISCORD_BOT_TOKEN`には同じBotのトークンをサーバー環境変数として設定します。ブラウザーへは渡しません。
 
-## 9. Docker関連
+## 9. コミュニティプラットフォーム
 
-`web/Dockerfile`はサイトディレクトリ単独をbuild contextとして、Next.js standaloneをNode 22 Alpineで実行します。ComposeはWebとNginxを起動します。`WEB_BUILD_CONTEXT`、`BOT_DATA_HOST_PATH`、`ANNOUNCEMENTS_HOST_PATH`は環境変数で指定できます。Botのdataディレクトリとお知らせJSONはWebへ読み取り専用でマウントし、Bot自体は既存の`/bots/ettiganibot/`で起動し続けます。
+Discord OAuth2（`identify`スコープ）でログインし、HttpOnly署名付きCookieを7日間のセッションとして使います。Discord Developer Portalに次のRedirect URIを登録し、Compose環境変数でOAuth情報を設定してください。
+
+Developer Portalでの操作手順、Windowsローカル環境と本番サーバーそれぞれの具体的な設定・再起動方法は、ルートの[README「Discordログインの設定」](../README.md#discordログインの設定)を参照してください。
+
+```text
+https://<公開ホスト名>/api/auth/discord/callback
+```
+
+必須の環境変数は`DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`、`DISCORD_REDIRECT_URI`、32文字以上のランダムな`SESSION_SECRET`です。コミュニティ投稿は`COMMUNITY_DATA_DIR/community.json`へ、投稿画像は同ディレクトリの`uploads/`へ保存し、Botの統計ファイルとは分離しています。画像はJPEG・PNG・WebP形式で5MBまでアップロードできます。Dockerでは`COMMUNITY_DATA_DIR`の既定値は`/app/community-data`で、Composeの永続ボリュームと一致します。Composeの`community-data-init`サービスがホスト側ディレクトリを起動時にUID/GID 1001所有へ設定してからWebを起動します。複数Webプロセスへ水平スケールする場合は、JSONファイル保存を共有データベースへ置き換える必要があります。
+
+OAuth state Cookieは`Path=/`、`SameSite=Lax`、本番では`Secure`で発行し、Domainは指定しないhost-only Cookieです。HTTPS上のDiscord callback（トップレベルGET）へ送信される設定です。Nginxは公開HostとCloudflareから受け取った`X-Forwarded-Proto`をNext.jsへ渡します。`DISCORD_REDIRECT_URI`は公開ドメインのcallback URLに設定してください。OAuth成功後は同じ公開オリジンのトップページへ戻ります。
+
+ローカルでログインを試すには、Discord Developer PortalでOAuth2 Redirect URIに`http://localhost:3000/api/auth/discord/callback`を登録し、`web/.env.local`を作成します。以下の値を実際のDiscord Application情報に置き換えてから、開発サーバーを再起動してください。
+
+```dotenv
+DISCORD_CLIENT_ID=DiscordアプリケーションのClient ID
+DISCORD_CLIENT_SECRET=DiscordアプリケーションのClient Secret
+DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
+SESSION_SECRET=32文字以上のランダムな秘密値
+```
+
+`SESSION_SECRET`は`node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`で生成できます。`.env.local`やClient Secretは公開・コミットしないでください。本番ではサイトの`.env.local`ではなくCompose用`.env.site`へ設定し、Webコンテナを再起動します。設定がない場合、ログインボタンから設定不足の説明が表示されます。Client ID/Secret自体はアプリ管理者がDiscord Developer Portalで用意する必要があり、このリポジトリには含まれません。
+
+コミュニティトップは`/community`です。Discordログイン後、カテゴリー・タグ・サムネイル・全体公開またはBot導入サーバー限定を設定した投稿を作成でき、投稿ごとにコメント・いいね・保存を利用できます。投稿者本人または`ADMIN_IDS`で指定した管理者は、投稿カードのメニューから投稿を編集・削除できます。サーバー限定投稿はBotトークンでDiscordメンバーシップを確認し、未ログインまたは対象サーバー外のユーザーには表示しません。開発者ノートは一般ユーザーには公開記事のみ表示され、管理者は`/admin/devnotes`から作成・編集・削除、公開日時や公開状態を管理します。`ADMIN_IDS`はDiscord User IDをカンマ区切りで指定し、`DEV_NOTES_HOST_PATH`で管理JSONの永続保存先を設定します。
+
+コミュニティ操作はユーザーごとに、いいね（解除を含む）を1分20回、コメントを1分5回、返信を1分5回に制限します。超過時はHTTP 429と`Retry-After`を返します。いいね通知は投稿ごとに最初のいいねから5分間、コメント通知は同一投稿ごと、返信通知は同一コメントごとに3分間集約します。同じ送信者から同じ受信者への通知は種類・投稿にかかわらず30秒間隔を空けます。メンション・管理者通知は即時通知キューで集約通知より優先されます。通知はコミュニティJSON内の永続キューへ記録し、Discord DMは最大1秒に1件ずつ送信します。Discord 429は`Retry-After`に従って最大2回再試行し、待機時間が30秒を超える場合は再試行せず失敗ログへ記録します。通知の失敗は投稿・コメント操作を取り消しません。コミュニティJSONの更新キューと通知ディスパッチは単一Webプロセスを前提としており、Webを複数プロセスへ水平スケールする場合は共有DB／キューと分散ロックへ移行してください。
+
+## 10. Docker関連
+
+`web/Dockerfile`はサイトディレクトリ単独をbuild contextとして、Next.js standaloneをNode 22 Alpineで実行します。ComposeはWebとNginxを起動します。`WEB_BUILD_CONTEXT`、`BOT_DATA_HOST_PATH`、`ANNOUNCEMENTS_HOST_PATH`、`COMMUNITY_DATA_HOST_PATH`、`DEV_NOTES_HOST_PATH`は環境変数で指定できます。Botのdataディレクトリとお知らせJSONはWebへ読み取り専用でマウントし、コミュニティデータと開発者ノートのJSONを含むディレクトリは書き込み可能な永続領域としてマウントします。Bot自体は既存の`/bots/ettiganibot/`で起動し続けます。
 
 本番の配置では、Botソース全体をDocker build contextに含めません。コマンド一覧は同梱済み`app/data/commands.json`を使います。Botのcommandsを変更したときは、ソースリポジトリの`web/`で`corepack pnpm generate:commands`を実行してからサイトファイルを同期してください。
 
-## 10. Nginx設定
+## 11. Nginx設定
 
-`deploy/nginx.conf`は`web:3000`へプロキシします。ホスト側公開ポートは`127.0.0.1:8080`に限定し、外部公開経路はCloudflare Tunnelにします。
+`deploy/nginx.conf`は公開Hostを`Host`と`X-Forwarded-Host`で、Cloudflareからの`X-Forwarded-Proto`を`web:3000`へ渡します。ホスト側公開ポートは`127.0.0.1:8080`に限定し、外部公開経路はCloudflare Tunnelにします。
 
-## 11. Cloudflare Tunnel設定
+## 12. Cloudflare Tunnel設定
 
 このサーバーのTunnelは`/etc/cloudflared/config.yml`を使うローカル管理方式です。Compose内に別の`cloudflared` Connectorを起動せず、既存のホスト側Tunnel ingressを`http://127.0.0.1:8080`へ向けます。同じTunnelにtoken方式のConnectorを重ねると、ローカル設定を読み込まないConnectorへ割り当てられたリクエストが503になります。DashboardからTunnel migrationを行う必要はありません。
 
-## 12. デプロイ手順
+## 13. デプロイ手順
 
 1. Ubuntu ServerにDocker Engine、Docker Compose plugin、Git、`rsync`を用意します。
 2. Botコードを`/bots/ettiganibot/`へ反映し、Developer PortalでServer Members Intentを有効にしてBotを再起動します。`/bots/ettiganibot/data/guilds.json`が生成されたことを確認します。

@@ -5,6 +5,7 @@
 - BotとCompose: `/bots/ettiganibot/`
 - サイト: `/var/www/ettiganibot-dashboard.com/public_html/`
 - Botデータ: `/bots/ettiganibot/data/`
+- コミュニティデータ: `/bots/ettiganibot/community-data/`
 - Compose用秘密設定: `/bots/ettiganibot/.env.site`（権限600）
 - Cloudflare Tunnel設定: `/etc/cloudflared/config.yml`（ホスト側のローカル管理Tunnel）
 
@@ -28,6 +29,18 @@ chmod 600 .env.site
 ```
 
 `.env.site`の値は[`.env.example`](.env.example)を参照してください。既存の`.env.site`がある場合、サンプルで上書きせず必要な値だけ確認・更新します。
+
+Discord Developer PortalでOAuth2 Redirect URIに`https://ettiganibot-dashboard.com/api/auth/discord/callback`を登録し、Client ID、Client Secret、32文字以上のランダムな`SESSION_SECRET`を設定します。`.env.site`の`ADMIN_IDS`に管理者のDiscord User IDをカンマ区切りで設定します。Composeは`community-data-init`サービスでコミュニティ保存先と開発者ノートJSONを初期化し、UID/GID 1001へ所有権を設定してからWebを起動します。
+
+```bash
+mkdir -p /bots/ettiganibot/community-data
+docker compose --env-file .env.site up -d --build
+docker compose --env-file .env.site exec web sh -c 'id && ls -ld /app/community-data && test -w /app/community-data'
+```
+
+`ls -ld`で所有者が`1001:1001`であること、`test -w`が成功することを確認します。`COMMUNITY_DATA_HOST_PATH`を変更した場合も、同じCompose起動処理でその保存先を初期化します。
+
+管理画面は`https://ettiganibot-dashboard.com/admin/devnotes`です。記事は`DEV_NOTES_HOST_PATH`で指定したディレクトリ内の`dev-notes.json`へ保存されます。既存の`.env.site`でこの値をファイルのパスに設定している場合は、JSONファイルを含むディレクトリのパスへ変更してください。`DEV_NOTES_ENABLED=false`で開発者ノート機能を停止できます。
 
 ## 起動・状態確認
 

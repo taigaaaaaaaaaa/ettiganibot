@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Filter } from "lucide-react";
 import { getDefaultAvatar } from "@/lib/discord";
+import ClientGetForm from "@/components/client-get-form";
 
 const periods = [
   { id: "today", label: "今日" },
@@ -43,7 +44,7 @@ export default function RankingTable({
           </Link>
         </nav>
         {selectedGuildId || guilds.length ? (
-          <form action="/ranking" className="guild-picker">
+          <ClientGetForm action="/ranking" className="guild-picker">
             <select aria-label="サーバー" defaultValue={selectedGuildId} name="guildId">
               <option value="">全体ランキング</option>
               {guilds.map((guild) => (
@@ -62,7 +63,7 @@ export default function RankingTable({
             >
               <Filter aria-hidden="true" size={17} />
             </button>
-          </form>
+          </ClientGetForm>
         ) : null}
       </div>
       <nav aria-label="ランキング期間" className="period-tabs">

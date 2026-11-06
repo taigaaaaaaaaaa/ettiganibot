@@ -1,15 +1,23 @@
 import fs from "fs";
 import { loadSettings } from "../setting.js";
 import { dataPath, readJson, writeJson } from "./dataPaths.js";
-import { resetCasinoMonthly, resetCasinoWeekly, rolloverCasinoDaily } from "./casinoStore.js";
-import { createRankingEmbed } from "./rankingEmbed.js";
+import { resetCasinoMonthly, resetCasinoWeekly } from "./casinoStore.js";
+import { createCommunityPostEmbeds, createRankingEmbed } from "./rankingEmbed.js";
 import { resetGuildRankingPeriod, rolloverGuildRankingDay } from "./guildRankingStore.js";
 import { getRankingChannel } from "./rankingChannel.js";
+import { getTodaysCommunityPosts } from "./communityPosts.js";
 
-// 毎日 0:00 に総合ランキングを投稿する
+// 毎日 23:59:59 に当日の総合ランキングを投稿する
 export async function sendDailyRanking(client) {
     try {
         const settings = loadSettings();
+        const counts = readJson("counts.json", {});
+        let communityPosts = null;
+        try {
+            communityPosts = getTodaysCommunityPosts();
+        } catch (error) {
+            console.error("今日のコミュニティ投稿取得エラー:", error);
+        }
 
         for (const guild of client.guilds.cache.values()) {
             const guildId = guild.id;
@@ -19,32 +27,45 @@ export async function sendDailyRanking(client) {
                 continue;
             }
 
-            let counts = readJson("counts.json", {});
-
             const filtered = Object.entries(counts)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
 
+            let rankingEmbed;
             if (filtered.length === 0) {
-                await channel.send({
-                    embeds: [createRankingEmbed("今日のえっちがにランキング(全サーバ)", ["ランキングデータはありませんでした。"])]
-                });
-                continue;
+                rankingEmbed = createRankingEmbed(
+                    "今日のえっちがにランキング(全サーバ)",
+                    ["ランキングデータはありませんでした。"]
+                );
+            } else {
+                const lines = [];
+                for (let i = 0; i < filtered.length; i++) {
+                    const [userId, xp] = filtered[i];
+                    const user = await client.users.fetch(userId);
+                    lines.push(`${i + 1}位 ${user.username}（${xp}回）`);
+                }
+                rankingEmbed = createRankingEmbed("今日のえっちがにランキング(全サーバ)", lines);
             }
 
-            const lines = [];
-            for (let i = 0; i < filtered.length; i++) {
-                const [userId, xp] = filtered[i];
-                const user = await client.users.fetch(userId);
-                lines.push(`${i + 1}位 ${user.username}（${xp}回）`);
-            }
+            const communityEmbeds =
+                communityPosts === null ? [] : createCommunityPostEmbeds(communityPosts);
+            await channel.send({ embeds: [rankingEmbed, ...communityEmbeds.slice(0, 1)] });
 
-            await channel.send({ embeds: [createRankingEmbed("今日のえっちがにランキング(全サーバ)", lines)] });
+            for (const embed of communityEmbeds.slice(1)) {
+                await channel.send({ embeds: [embed] });
+            }
         }
+    } catch (err) {
+        console.error("デイリーランキングエラー:", err);
+    }
+}
 
-        let weekly = readJson("weekly.json", {});
-        let monthly = readJson("monthly.json", {});
-        let counts = readJson("counts.json", {});
+// 毎日 0:00 に前日分を週間・月間へ加算してリセットする
+export function rolloverDailyRanking() {
+    try {
+        const weekly = readJson("weekly.json", {});
+        const monthly = readJson("monthly.json", {});
+        const counts = readJson("counts.json", {});
 
         for (const userId in counts) {
             weekly[userId] = (weekly[userId] || 0) + counts[userId];
@@ -55,9 +76,8 @@ export async function sendDailyRanking(client) {
         writeJson("monthly.json", monthly);
         writeJson("counts.json", {});
         rolloverGuildRankingDay();
-        rolloverCasinoDaily();
     } catch (err) {
-        console.error("デイリーランキングエラー:", err);
+        console.error("デイリー集計リセットエラー:", err);
     }
 }
 

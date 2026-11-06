@@ -4,6 +4,15 @@ import { Filter } from "lucide-react";
 import { getDefaultAvatar } from "@/lib/discord";
 import { getGuilds } from "@/lib/data";
 import { getUserProfile, resolveGuilds } from "@/lib/rankings";
+import Link from "next/link";
+import { getSession } from "@/lib/auth";
+import {
+  getPostEditedLabel,
+  getVisiblePosts,
+  readCommunityStore,
+  sortPosts,
+} from "@/lib/community";
+import ClientGetForm from "@/components/client-get-form";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +22,14 @@ export default async function UserPage({ params, searchParams }) {
   if (!/^\d{17,20}$/.test(userId)) notFound();
 
   const profile = await getUserProfile(userId, query.guildId || null);
+  const viewer = await getSession();
+  const userPosts = sortPosts(
+    await getVisiblePosts(
+      readCommunityStore().posts.filter((post) => post.author.id === userId),
+      viewer,
+    ),
+  );
+  const receivedLikes = userPosts.reduce((total, post) => total + (post.likes?.length || 0), 0);
   const guilds = await resolveGuilds(getGuilds());
   const values = [
     ["今日", profile.today],
@@ -58,6 +75,58 @@ export default async function UserPage({ params, searchParams }) {
           </article>
         ))}
       </section>
+      <section aria-label="コミュニティ統計" className="profile-stats community-profile-stats">
+        <article className="profile-stat">
+          <span>投稿数</span>
+          <strong>{userPosts.length.toLocaleString("ja-JP")}</strong>
+        </article>
+        <article className="profile-stat">
+          <span>獲得いいね</span>
+          <strong>{receivedLikes.toLocaleString("ja-JP")}</strong>
+        </article>
+      </section>
+      <div className="profile-tabs">
+        <Link aria-current="page" className="is-active" href={`/users/${userId}`}>
+          投稿一覧
+        </Link>
+        <a href="#popular-posts">人気投稿</a>
+      </div>
+      <section className="post-list profile-post-list">
+        {userPosts.length ? (
+          userPosts.map((post) => (
+            <article className="post-card compact-post" key={post.id}>
+              <div className="post-card-content">
+                <div className="post-meta">
+                  <span className="category-chip">{post.category || "未分類"}</span>
+                  <time>{new Date(post.createdAt).toLocaleDateString("ja-JP")}</time>
+                  {getPostEditedLabel(post) ? <span>{getPostEditedLabel(post)}</span> : null}
+                </div>
+                <h2>
+                  <Link href={`/community/${post.id}`}>{post.title}</Link>
+                </h2>
+                <p className="post-excerpt">{post.body.slice(0, 150)}</p>
+                <div className="post-card-footer">
+                  <span>♥ {post.likes?.length || 0}</span>
+                  <span>💬 {post.comments?.length || 0}</span>
+                </div>
+              </div>
+            </article>
+          ))
+        ) : (
+          <p className="empty-state">公開されている投稿はまだありません。</p>
+        )}
+      </section>
+      <section className="popular-posts" id="popular-posts">
+        <h2 className="section-title">人気投稿</h2>
+        {sortPosts(userPosts, "popular")
+          .slice(0, 3)
+          .map((post) => (
+            <Link className="popular-note" href={`/community/${post.id}`} key={post.id}>
+              {post.title}
+              <span>♥ {post.likes?.length || 0}</span>
+            </Link>
+          ))}
+      </section>
 
       <h2 className="section-title profile-section-title">ettigani$</h2>
       <section aria-label="ettigani$" className="profile-stats">
@@ -82,7 +151,11 @@ export default async function UserPage({ params, searchParams }) {
         ) : null}
       </section>
       {Object.keys(guilds).length ? (
-        <form action={`/users/${userId}`} className="guild-picker" style={{ marginTop: 18 }}>
+        <ClientGetForm
+          action={`/users/${userId}`}
+          className="guild-picker"
+          style={{ marginTop: 18 }}
+        >
           <select aria-label="サーバー順位" defaultValue={query.guildId || ""} name="guildId">
             <option value="">サーバー順位を選択</option>
             {Object.entries(guilds).map(([guildId, guild]) => (
@@ -94,7 +167,7 @@ export default async function UserPage({ params, searchParams }) {
           <button aria-label="順位を表示" className="select-button" type="submit">
             <Filter aria-hidden="true" size={17} />
           </button>
-        </form>
+        </ClientGetForm>
       ) : null}
       <p className="rank-note">
         レベルは保存済みlevels.jsonではなく、累計から floor(sqrt(total)) で再計算しています。

@@ -63,6 +63,14 @@ export default async function HomePage({ searchParams }) {
             <ArrowRight aria-hidden="true" size={17} />
             コマンド一覧
           </Link>
+          <Link className="action-link" href="/community">
+            <MessageCircle aria-hidden="true" size={17} />
+            コミュニティ
+          </Link>
+          <Link className="action-link" href="/dev-notes">
+            <ArrowRight aria-hidden="true" size={17} />
+            開発者ノート
+          </Link>
         </div>
       </section>
 

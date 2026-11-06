@@ -5,6 +5,7 @@ package-lock.json
 # Environment
 .env
 .env.site
+web/.env.local
 
 # Runtime data
 ettiganibot/data/logs/**
@@ -26,3 +27,5 @@ web/node_modules/
 web/.next/
 web/out/
 web/next-env.d.ts
+web/data/community.json
+community-data/

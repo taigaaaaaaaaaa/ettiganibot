@@ -1,12 +1,96 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+
+function NavigationCompletion() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+
+  useEffect(() => {
+    window.dispatchEvent(new Event("ettigani:loading-end"));
+  }, [pathname, search]);
+
+  return null;
+}
 
 export default function LoadingTransition({ children }) {
+  const pathname = usePathname();
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("loading.");
   const [isFading, setIsFading] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  useEffect(() => {
+    let hideTimer;
+    let urlTimer;
+    let loadingStartUrl;
+
+    function finishLoading() {
+      window.clearTimeout(hideTimer);
+      window.clearInterval(urlTimer);
+      setIsActionLoading(false);
+    }
+
+    function startLoading() {
+      window.clearTimeout(hideTimer);
+      window.clearInterval(urlTimer);
+      loadingStartUrl = window.location.href;
+      setIsActionLoading(true);
+      urlTimer = window.setInterval(() => {
+        if (window.location.href !== loadingStartUrl) finishLoading();
+      }, 100);
+      hideTimer = window.setTimeout(finishLoading, 20_000);
+    }
+
+    function handleClick(event) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest("button");
+      if (button && !button.disabled && !button.hasAttribute("data-loading-exempt")) {
+        if (button.type !== "submit") startLoading();
+        return;
+      }
+
+      const link = target.closest("a[href]");
+      if (
+        !link ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        link.hasAttribute("download") ||
+        link.target === "_blank"
+      ) {
+        return;
+      }
+      if (link.getAttribute("href")?.startsWith("#")) return;
+      startLoading();
+    }
+
+    function handleSubmit() {
+      startLoading();
+    }
+
+    document.addEventListener("click", handleClick, true);
+    document.addEventListener("submit", handleSubmit, true);
+    window.addEventListener("ettigani:loading-end", finishLoading);
+
+    return () => {
+      window.clearTimeout(hideTimer);
+      window.clearInterval(urlTimer);
+      document.removeEventListener("click", handleClick, true);
+      document.removeEventListener("submit", handleSubmit, true);
+      window.removeEventListener("ettigani:loading-end", finishLoading);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new Event("ettigani:loading-end"));
+  }, [pathname]);
 
   useEffect(() => {
     let currentProgress = 0;
@@ -71,6 +155,15 @@ export default function LoadingTransition({ children }) {
           <p className="loading-text">{message}</p>
         </div>
       ) : null}
+      {isActionLoading ? (
+        <div aria-live="polite" className="action-loading-indicator" role="status">
+          <span aria-hidden="true" className="page-loading-spinner" />
+          <span>読み込み中...</span>
+        </div>
+      ) : null}
+      <Suspense fallback={null}>
+        <NavigationCompletion />
+      </Suspense>
     </>
   );
 }

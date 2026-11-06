@@ -19,6 +19,7 @@
 - [スラッシュコマンド](#スラッシュコマンド)
 - [データとプライバシー](#データとプライバシー)
 - [ランキングWebポータル](#ランキングwebポータル)
+- [Discordログインの設定](#discordログインの設定)
 - [デプロイ手順](DEPLOYMENT.md)
 
 ## 機能
@@ -96,7 +97,7 @@ npm start
 
 Botが起動すると、既存サーバーへのスラッシュコマンド登録と、ポート `3000` のCLI APIサーバー起動を行います。新しいサーバーに参加すると、コマンド登録後に初期設定の案内を送信します。ランキング投稿先はサーバー管理者が `/setting` で設定してください。
 
-ランキングは日本時間で、毎日0時に日間・ettigani$ランキング、毎週月曜0時に週間ランキング、毎月1日0時に月間ランキングを投稿します。
+日本時間で毎日23:59:59に日間ランキングを投稿し、当日に投稿された公開コミュニティ記事も同梱します。ettigani$ランキングは毎日0時、週間ランキングは毎週月曜0時、月間ランキングは毎月1日0時に投稿します。
 
 ## スラッシュコマンド
 
@@ -184,6 +185,111 @@ node cli.js kick <userId> <guildId>
 Next.js版のサイト仕様・ランキングデータの扱い・Docker Composeでの公開手順は[web/README.md](web/README.md)を参照してください。WebサイトはBotのJSONを読み取り専用で利用します。
 
 Ubuntuでの起動・更新手順をすぐ確認する場合は[DEPLOYMENT.md](DEPLOYMENT.md)を参照してください。
+
+## Discordログインの設定
+
+Discordログインを有効にするには、Discord Developer PortalでOAuth2情報を取得し、Webサイトの環境変数に設定します。Botのトークン（`TOKEN` / `DISCORD_BOT_TOKEN`）とは別の設定です。OAuthのClient Secretと`SESSION_SECRET`はパスワードと同じように扱い、チャット、スクリーンショット、GitHubには載せないでください。
+
+### 1. Discord Developer PortalでOAuth2を設定する
+
+1. [Discord Developer Portal](https://discord.com/developers/applications)にログインします。
+2. 既存Botと同じDiscordアプリケーションを使う場合は、そのApplicationを開きます。まだApplicationがない場合は「New Application」で作成します。
+3. 「General Information」にある**Application ID**を控えます。これが`DISCORD_CLIENT_ID`です。
+4. 「OAuth2」設定を開き、**Client Secret**を確認または再生成して控えます。これが`DISCORD_CLIENT_SECRET`です。Secretは外部に共有しないでください。
+5. OAuth2のRedirectsに、利用する環境のURLを追加して保存します。URLは末尾のパスまで完全一致させます。
+
+ローカル開発用:
+
+```text
+http://localhost:3000/api/auth/discord/callback
+```
+
+本番用（このサイトの公開URL）:
+
+```text
+https://ettiganibot-dashboard.com/api/auth/discord/callback
+```
+
+OAuth2では`identify`スコープを使います。サイト側で認証URLに指定するため、ほかのスコープを追加する必要はありません。既存のBotアプリケーションを使っても、BotトークンをWebへ設定したり、DiscordへのBot招待をやり直したりする必要はありません。
+
+### 2. ローカルで試す（Windows）
+
+リポジトリの`web`フォルダーに`.env.local`を作ります。PowerShellの場合:
+
+```powershell
+Set-Location "C:\bots\えっちがにbot二台目\web"
+notepad .env.local
+```
+
+メモ帳で`web/.env.local`が開くので、次の内容を入力して保存してください。ファイルがまだない場合は新規作成を確認します。Client IDとClient SecretはDeveloper Portalで控えた実際の値に置き換えます。
+
+```dotenv
+DISCORD_CLIENT_ID=ここにApplication_ID
+DISCORD_CLIENT_SECRET=ここにClient_Secret
+DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
+SESSION_SECRET=ここにランダムな64文字以上の値
+```
+
+`SESSION_SECRET`はPowerShellで次のコマンドを実行して生成できます。表示された値を`.env.local`の`SESSION_SECRET`へ貼り付けます。
+
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+ファイルを保存したら、開発サーバーを起動しているターミナルで`Ctrl+C`を押して停止し、次のように再起動します。
+
+```powershell
+Set-Location "C:\bots\えっちがにbot二台目\web"
+npm run dev
+```
+
+ブラウザーで`http://localhost:3000/community`を開き、「Discordでログイン」を押してください。Discordの認証画面が表示され、許可後に`/me`へ戻れば成功です。`.env.local`はGit管理対象外です。絶対にコミットしないでください。
+
+### 3. 本番サイトで有効にする
+
+本番ではWebの`.env.local`ではなく、サーバーのCompose設定ファイル`/bots/ettiganibot/.env.site`に設定します。サーバーへSSH接続し、次を実行します。
+
+```bash
+cd /bots/ettiganibot
+nano .env.site
+```
+
+次の4項目を追加または更新します。`DISCORD_CLIENT_ID`と`DISCORD_CLIENT_SECRET`にはDeveloper Portalの値を設定し、`SESSION_SECRET`は上の手順と同様に生成したランダム値に置き換えます。
+
+```dotenv
+DISCORD_CLIENT_ID=Developer_PortalのApplication_ID
+DISCORD_CLIENT_SECRET=Developer_PortalのClient_Secret
+DISCORD_REDIRECT_URI=https://ettiganibot-dashboard.com/api/auth/discord/callback
+SESSION_SECRET=ランダムに生成した64文字以上の値
+ADMIN_IDS=管理者のDiscord_User_ID（複数はカンマ区切り）
+DEV_NOTES_ENABLED=true
+COMMUNITY_ENABLED=true
+SITE_MAINTENANCE=false
+```
+
+保存したら、秘密設定の権限を確認し、Webコンテナを再作成します。
+
+```bash
+chmod 600 /bots/ettiganibot/.env.site
+cd /bots/ettiganibot
+docker compose --env-file .env.site config --quiet
+docker compose --env-file .env.site up -d --build web
+docker compose --env-file .env.site ps
+docker compose --env-file .env.site logs --tail=80 web
+```
+
+`config --quiet`が成功し、Webコンテナが起動していることを確認してから、本番サイトのコミュニティページでログインを試してください。環境変数を変更しただけでは既に起動中のコンテナに反映されないため、必ず`up -d`でWebコンテナを再作成してください。
+
+### 4. うまくいかないとき
+
+| 表示・症状 | 確認すること |
+| --- | --- |
+| 「Discordログインは現在設定されていません」 | `DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`が空でないこと、`SESSION_SECRET`が32文字以上であること、設定後にWebを再起動したこと |
+| Discord側で`redirect_uri`のエラー | Developer PortalのRedirect URIと`DISCORD_REDIRECT_URI`が、`http`/`https`、ホスト名、パスを含めて完全一致していること。末尾に余分な`/`を付けない |
+| 認証後にログイン失敗ページへ戻る | Client ID/Secretが同じApplicationの組み合わせか、Secretを再生成した場合に`.env.local`または`.env.site`も更新したか |
+| ローカルでは失敗し、本番では成功（またはその逆） | ローカルは`http://localhost:3000/...`、本番は`https://ettiganibot-dashboard.com/...`のRedirect URIと環境変数を使い分けているか |
+
+Client Secretを紛失・公開した場合はDeveloper Portalで再生成し、環境変数を新しい値に更新してからWebを再起動してください。
 
 ## 作者・Special Thanks
 

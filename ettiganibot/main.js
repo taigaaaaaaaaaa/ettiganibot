@@ -10,8 +10,14 @@ import { commands, loadCommands, registerGuildCommands } from "./src/commandLoad
 import { handleGuildCreate } from "./src/guildSetup.js";
 import { syncGuildRegistry } from "./src/guildRegistry.js";
 import { registerBotEvents } from "./src/botEvents.js";
-import { sendDailyRanking, sendWeeklyRanking, sendMonthlyRanking } from "./src/ranking.js";
+import {
+    sendDailyRanking,
+    rolloverDailyRanking,
+    sendWeeklyRanking,
+    sendMonthlyRanking
+} from "./src/ranking.js";
 import { sendCasinoRanking } from "./src/casinoRanking.js";
+import { rolloverCasinoDaily } from "./src/casinoStore.js";
 import { sendLogToAPI } from "./src/externalApi.js";
 import { joinGuildVoice, leaveGuildVoice } from "./src/voiceManager.js";
 
@@ -159,7 +165,12 @@ app.listen(3000, () => {
 const cronOptions = { timezone: "Asia/Tokyo" };
 
 cron.schedule("0 0 * * *", async () => {
+    rolloverDailyRanking();
     await sendCasinoRanking(client);
+    rolloverCasinoDaily();
+}, cronOptions);
+
+cron.schedule("59 59 23 * * *", async () => {
     await sendDailyRanking(client);
 }, cronOptions);
 

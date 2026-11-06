@@ -23,8 +23,9 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+RUN mkdir -p /app/community-data && chown nextjs:nodejs /app/community-data
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
-USER nextjs
+USER 1001:1001
 EXPOSE 3000
 CMD ["node", "server.js"]
