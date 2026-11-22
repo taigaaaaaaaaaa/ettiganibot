@@ -12,6 +12,9 @@ export function createRankingEmbed(title, rankingLines) {
             "",
             "週間・月間・累計のランキングは、こちらのサイトで確認できます！",
             DASHBOARD_URL,
+            "",
+            "公式サーバができました！参加してくれると嬉しいです～",
+            "https://discord.gg/pkvfkhFyv",
         ].join("\n"));
 }
 

@@ -30,7 +30,7 @@ chmod 600 .env.site
 
 `.env.site`の値は[`.env.example`](.env.example)を参照してください。既存の`.env.site`がある場合、サンプルで上書きせず必要な値だけ確認・更新します。
 
-Discord Developer PortalでOAuth2 Redirect URIに`https://ettiganibot-dashboard.com/api/auth/discord/callback`を登録し、Client ID、Client Secret、32文字以上のランダムな`SESSION_SECRET`を設定します。`.env.site`の`ADMIN_IDS`に管理者のDiscord User IDをカンマ区切りで設定します。Composeは`community-data-init`サービスでコミュニティ保存先と開発者ノートJSONを初期化し、UID/GID 1001へ所有権を設定してからWebを起動します。
+Discord Developer PortalでOAuth2 Redirect URIに`https://ettiganibot-dashboard.com/api/auth/discord/callback`と`https://ettiganibot-dashboard.com/api/verify/callback`を登録し、Client ID、Client Secret、32文字以上のランダムな`SESSION_SECRET`を設定します。Cloudflare Turnstileには`ettiganibot-dashboard.com`を許可ホストとして登録します。`.env.site`にTurnstile Site Key/Secret、`VERIFY_DISCORD_REDIRECT_URI`、`VERIFY_INTERNAL_SECRET`を設定します。`VERIFY_INTERNAL_SECRET`はBot側`.env`にも同一値を設定し、`VERIFY_WEB_URL=https://ettiganibot-dashboard.com`もBot側に追加します。`.env.site`の`ADMIN_IDS`に管理者のDiscord User IDをカンマ区切りで設定します。Composeは`community-data-init`サービスでコミュニティ保存先と開発者ノートJSONを初期化し、UID/GID 1001へ所有権を設定してからWebを起動します。認証SQLiteは同じ永続`community-data`ボリュームへ保存されます。
 
 ```bash
 mkdir -p /bots/ettiganibot/community-data
@@ -64,7 +64,7 @@ Cloudflare Tunnelはホスト側のローカル設定で管理する。`/etc/clo
 
 ## サイトファイルを更新
 
-1. `web/`の中身をWinSCPで`public_html/`へコピーする。`node_modules/`と`.next/`はコピーしない。
+1. `web/`の中身をWinSCPで`public_html/`へコピーする。`node_modules/`と`.next/`はコピーしない。`package.json`だけを更新せず、対応する`pnpm-lock.yaml`と`pnpm-workspace.yaml`も必ず同時にコピーする。Frozen installがlockfileのずれを検出した場合は、公開ディレクトリ側のこの3ファイルが同じリリースか確認する。
 2. `docker-compose.yml`や`deploy/nginx.conf`を更新した場合は、それぞれ`/bots/ettiganibot/`、`/bots/ettiganibot/deploy/`へコピーする。
 3. お知らせだけを更新するときは`public_html/app/data/announcements.json`を書き換える。マウント済みファイルなので再ビルドは不要。
 4. コード、依存関係、Dockerfileを更新したら再ビルドする。
@@ -75,6 +75,8 @@ docker compose --env-file .env.site config --quiet
 docker compose --env-file .env.site up -d --build
 docker compose --env-file .env.site ps
 ```
+
+Botも更新した場合は、Botの`.env`に共有`VERIFY_INTERNAL_SECRET`と`VERIFY_WEB_URL`があることを確認し、Botプロセスを再起動します。認証システム初回利用時はBot起動後に管理者が`/verify-setup`を実行し、ログチャンネルを指定します。実行チャンネルにパネルが送られます。`/verify-status`で状態を確認し、`/verify-panel`で必要に応じて再送信してください。
 
 Composeから`cloudflared`サービスを削除した版へ更新するときは、古い重複コンテナを一度だけ削除する:
 
@@ -92,7 +94,7 @@ journalctl -u cloudflared -n 50 --no-pager
 
 ## Botコードを更新
 
-BotをPM2で管理している場合、`/bots/ettiganibot/`に新しいコードをコピーしてから実行する。
+BotをPM2で管理している場合、`/bots/ettiganibot/`に新しいコードをコピーしてから実行する。認証機能は`ettiganibot/.env`をBotのコード位置から読み込むため、PM2の起動ディレクトリには依存しない。Compose用`.env.site`だけではBotへ環境変数は渡らない。
 
 VC読み上げはFish AudioのMP3を再生するため、サーバーにFFmpegが必要。初回のみインストールし、Botと同じユーザーから実行できることを確認する:
 

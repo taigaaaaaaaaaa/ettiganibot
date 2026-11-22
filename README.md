@@ -5,6 +5,7 @@
 本当に個人的なことになりますが、書かせてください。
 このbotを作ることになったときにいた人たちに感謝を。本当にありがとうございました。
 あなた達がいなければ今の私はいませんでした。
+
 ### 本当に、本当にありがとうございました。
 
 本当にこのbotには私の思い出が詰まってます。よかったら使ってください。
@@ -56,11 +57,11 @@ npm --version
 
 基本の権限は `View Channels`、`Send Messages`、`Embed Links`、`Read Message History` です。機能に応じて追加してください。
 
-| 権限 | 用途 |
-| --- | --- |
-| `Connect`、`Speak` | ボイスチャンネルでの読み上げ |
-| `Manage Roles` | ショップロールの作成・付与、およびレベル報酬ロールの付与 |
-| `Ban Members`、`Kick Members` | CLIからBAN・KICKを実行 |
+| 権限                          | 用途                                                     |
+| ----------------------------- | -------------------------------------------------------- |
+| `Connect`、`Speak`            | ボイスチャンネルでの読み上げ                             |
+| `Manage Roles`                | ショップロールの作成・付与、およびレベル報酬ロールの付与 |
+| `Ban Members`、`Kick Members` | CLIからBAN・KICKを実行                                   |
 
 Botのロールは、付与する対象ロールより上に配置してください。必要以上に広い権限を付けず、使う機能に必要な権限だけを付与してください。
 
@@ -76,14 +77,14 @@ copy .env.example .env
 
 `.env` を開いて、利用する機能に必要な値を設定します。
 
-| 変数 | 必須条件 | 説明 |
-| --- | --- | --- |
-| `TOKEN` | 必須 | Discord Botのトークン |
-| `CLI_KEY` | CLI APIを使う場合 | CLI API認証用の長くランダムな文字列 |
-| `FISH_AUDIO_API_KEY` | 読み上げを使う場合 | Fish Audio APIキー |
-| `FISH_AUDIO_REFERENCE_ID` | 読み上げを使う場合 | Fish Audioの音声Reference ID |
-| `FISH_AUDIO_MODEL` | 任意 | 音声モデル。省略時は `s2.1-pro-free` |
-| `TARGET_BOT_ID` | 不要 | `.env.example` にありますが、現バージョンでは使用していません |
+| 変数                      | 必須条件           | 説明                                                          |
+| ------------------------- | ------------------ | ------------------------------------------------------------- |
+| `TOKEN`                   | 必須               | Discord Botのトークン                                         |
+| `CLI_KEY`                 | CLI APIを使う場合  | CLI API認証用の長くランダムな文字列                           |
+| `FISH_AUDIO_API_KEY`      | 読み上げを使う場合 | Fish Audio APIキー                                            |
+| `FISH_AUDIO_REFERENCE_ID` | 読み上げを使う場合 | Fish Audioの音声Reference ID                                  |
+| `FISH_AUDIO_MODEL`        | 任意               | 音声モデル。省略時は `s2.1-pro-free`                          |
+| `TARGET_BOT_ID`           | 不要               | `.env.example` にありますが、現バージョンでは使用していません |
 
 BotトークンやAPIキーをGitHub、チャット、スクリーンショットなどに公開しないでください。トークンが漏れた場合はDeveloper Portalで再生成してください。
 
@@ -103,36 +104,36 @@ Botが起動すると、既存サーバーへのスラッシュコマンド登�
 
 ### 集計・レベル
 
-| コマンド | 内容 |
-| --- | --- |
-| `/today`、`/weekly`、`/monthly`、`/total` | サーバー内メンバーの集計を表示 |
-| `/my_today`、`/my_weekly`、`/my_monthly`、`/my_total` | 自分の集計を表示 |
-| `/level`、`/level_rank`、`/next_level` | レベル、レベルランキング、次のレベルまでの回数を表示 |
-| `/gamertag user:<ユーザー>` | 登録済みのMinecraftゲーマータグを表示 |
-| `/deletedmessage` | サーバーで削除された直近5件を表示 |
-| `/setting channel:<チャンネル>` | ランキング投稿先を設定（サーバー管理者向け） |
-| `/ping`、`/help` | 応答速度、Botのヘルプを表示 |
+| コマンド                                              | 内容                                                 |
+| ----------------------------------------------------- | ---------------------------------------------------- |
+| `/today`、`/weekly`、`/monthly`、`/total`             | サーバー内メンバーの集計を表示                       |
+| `/my_today`、`/my_weekly`、`/my_monthly`、`/my_total` | 自分の集計を表示                                     |
+| `/level`、`/level_rank`、`/next_level`                | レベル、レベルランキング、次のレベルまでの回数を表示 |
+| `/gamertag user:<ユーザー>`                           | 登録済みのMinecraftゲーマータグを表示                |
+| `/deletedmessage`                                     | サーバーで削除された直近5件を表示                    |
+| `/setting channel:<チャンネル>`                       | ランキング投稿先を設定（サーバー管理者向け）         |
+| `/ping`、`/help`                                      | 応答速度、Botのヘルプを表示                          |
 
 ### ettigani$
 
-| コマンド | 内容 |
-| --- | --- |
-| `/balance` | 残高を表示 |
-| `/daily` | 1日1回、1,000 ettigani$を受け取る |
-| `/shop list`、`/shop buy` | 色ロール一覧、色ロールの購入 |
-| `/slot bet:<金額>`、`/highlow bet:<金額> guess:<予想>` | スロット、HIGH/LOWゲーム |
-| `/blackjack bet:<金額>` | ブラックジャック |
-| `/ura_slot bet:<金額>` | 高額ベットの裏スロット |
-| `/ura_dice bet:<金額>` | 高額ベットのダイスゲーム |
+| コマンド                                               | 内容                              |
+| ------------------------------------------------------ | --------------------------------- |
+| `/balance`                                             | 残高を表示                        |
+| `/daily`                                               | 1日1回、1,000 ettigani$を受け取る |
+| `/shop list`、`/shop buy`                              | 色ロール一覧、色ロールの購入      |
+| `/slot bet:<金額>`、`/highlow bet:<金額> guess:<予想>` | スロット、HIGH/LOWゲーム          |
+| `/blackjack bet:<金額>`                                | ブラックジャック                  |
+| `/ura_slot bet:<金額>`                                 | 高額ベットの裏スロット            |
+| `/ura_dice bet:<金額>`                                 | 高額ベットのダイスゲーム          |
 
 残高とデイリー受取状況は全サーバー共通です。ゲームにはベット額などの条件があります。実行時に表示される説明を確認してください。
 
 ### ボイス読み上げ
 
-| コマンド | 内容 |
-| --- | --- |
-| `/ettigani_join` | 自分が参加中のボイスチャンネルで読み上げを開始 |
-| `/ettigani_leave` | 読み上げを終了して退出 |
+| コマンド          | 内容                                           |
+| ----------------- | ---------------------------------------------- |
+| `/ettigani_join`  | 自分が参加中のボイスチャンネルで読み上げを開始 |
+| `/ettigani_leave` | 読み上げを終了して退出                         |
 
 読み上げにはFish AudioのAPIキーとReference IDが必要です。参加者の入退室と、読み上げ対象ボイスチャンネルと同じカテゴリにあるテキストチャンネルのメッセージを読み上げます。
 
@@ -208,6 +209,7 @@ http://localhost:3000/api/auth/discord/callback
 
 ```text
 https://ettiganibot-dashboard.com/api/auth/discord/callback
+https://ettiganibot-dashboard.com/api/verify/callback
 ```
 
 OAuth2では`identify`スコープを使います。サイト側で認証URLに指定するため、ほかのスコープを追加する必要はありません。既存のBotアプリケーションを使っても、BotトークンをWebへ設定したり、DiscordへのBot招待をやり直したりする必要はありません。
@@ -282,14 +284,52 @@ docker compose --env-file .env.site logs --tail=80 web
 
 ### 4. うまくいかないとき
 
-| 表示・症状 | 確認すること |
-| --- | --- |
-| 「Discordログインは現在設定されていません」 | `DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`が空でないこと、`SESSION_SECRET`が32文字以上であること、設定後にWebを再起動したこと |
-| Discord側で`redirect_uri`のエラー | Developer PortalのRedirect URIと`DISCORD_REDIRECT_URI`が、`http`/`https`、ホスト名、パスを含めて完全一致していること。末尾に余分な`/`を付けない |
-| 認証後にログイン失敗ページへ戻る | Client ID/Secretが同じApplicationの組み合わせか、Secretを再生成した場合に`.env.local`または`.env.site`も更新したか |
-| ローカルでは失敗し、本番では成功（またはその逆） | ローカルは`http://localhost:3000/...`、本番は`https://ettiganibot-dashboard.com/...`のRedirect URIと環境変数を使い分けているか |
+| 表示・症状                                       | 確認すること                                                                                                                                    |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 「Discordログインは現在設定されていません」      | `DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`が空でないこと、`SESSION_SECRET`が32文字以上であること、設定後にWebを再起動したこと                 |
+| Discord側で`redirect_uri`のエラー                | Developer PortalのRedirect URIと`DISCORD_REDIRECT_URI`が、`http`/`https`、ホスト名、パスを含めて完全一致していること。末尾に余分な`/`を付けない |
+| 認証後にログイン失敗ページへ戻る                 | Client ID/Secretが同じApplicationの組み合わせか、Secretを再生成した場合に`.env.local`または`.env.site`も更新したか                              |
+| ローカルでは失敗し、本番では成功（またはその逆） | ローカルは`http://localhost:3000/...`、本番は`https://ettiganibot-dashboard.com/...`のRedirect URIと環境変数を使い分けているか                  |
 
 Client Secretを紛失・公開した場合はDeveloper Portalで再生成し、環境変数を新しい値に更新してからWebを再起動してください。
+
+## サーバー認証機能
+
+既存の`ettiganibot-dashboard.com`にTurnstile、Discord OAuth2、固定規約、認証ロール付与を統合しています。認証パネルのボタンからWebページへ進み、サーバー参加者の認証完了後にBotが`✅認証済み！`ロールを付与します。管理者には認証を求めません。
+
+### 初回設定
+
+1. Cloudflare Turnstileで対象ドメイン用のSite KeyとSecret Keyを作成します。
+2. Discord Developer PortalのOAuth2 Redirectsに`https://ettiganibot-dashboard.com/api/verify/callback`を追加します。OAuthスコープは`identify`です。
+3. Compose環境ファイル`/bots/ettiganibot/.env.site`に`VERIFY_DISCORD_REDIRECT_URI`、`TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY`、`VERIFY_INTERNAL_SECRET`を設定します。内部SecretはBotの`.env`にも同一値を設定し、`node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`で生成した長いランダム値を使います。
+4. Botの`ettiganibot/.env`に同じ`VERIFY_INTERNAL_SECRET`と`VERIFY_WEB_URL=https://ettiganibot-dashboard.com`を設定します。Compose用`.env.site`の値はBotプロセスには自動で渡らないため、必ずBot用`.env`にも設定してください。どちらの設定ファイルも秘密情報として保管してください。
+5. Docker ComposeでWebを再ビルドし、Botを再起動します。Botには`Manage Roles`、`View Channel`、`Send Messages`、`Embed Links`権限を与え、Bot自身のロールを認証ロールより上に置いてください。
+6. Discordで管理者が`/verify-setup log_channel:#認証ログ`を実行します。実行したテキストチャンネルへパネルが送られます。必要に応じて`/verify-panel`で再送信し、`/verify-status`で状態を確認してください。
+
+認証DBは既定で`/app/community-data/verification.sqlite`に作成され、`COMMUNITY_DATA_HOST_PATH`の永続ボリュームに保存されます。DBを含むデータ領域をバックアップしてください。設定変更後はWebコンテナを再作成し、Bot用`.env`を変更した場合はBotも再起動します。
+
+### 認証フローと確認
+
+```text
+Discord認証パネル
+  → Turnstile（ブラウザー + Siteverifyサーバー検証）
+  → Discord OAuth2 identify（DB保存state照合）
+  → サーバー参加確認・規約同意
+  → SQLiteへ認証記録・認証ロール付与・認証ログ送信
+  → 完了ページからDiscordへ復帰
+```
+
+検証は管理者が次の順で行います。
+
+1. `/verify-status`でTurnstile、OAuth、SQLite、ロール、ログチャンネルが正常と表示されることを確認します。
+2. 認証パネルの「認証を開始」ボタンを押し、TurnstileとDiscordログインを完了します。
+3. 規約チェックを外したままでは完了できず、同意後に認証ロールとログが付与・送信されることを確認します。
+4. 同じユーザーで再度開始し、「✅ 既に認証済みです」と表示されることを確認します。
+5. Bot再起動後も`/verify-status`と認証済みロールが維持されることを確認します。
+
+OAuth callbackエラー、Turnstile不合格、未参加、DB障害、ロール付与失敗はWeb上に原因を表示します。障害時は`docker compose --env-file .env.site logs --tail=100 web`とBotログを確認してください。
+
+認証ロールを運営が剥奪すると、BotがSQLiteへ失効状態を記録します。ユーザーの退出・再参加では失効状態を解除せず、再認証のロール付与成功時に解除します。BotがオンラインでGuild Members Intentを受信できることを確認してください。verify/internal認証APIはSQLiteベースのレート制限を行い、超過時はHTTP 429と`Retry-After`を返します。
 
 ## 作者・Special Thanks
 

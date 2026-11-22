@@ -33,10 +33,15 @@ export default function PostComposer({ guilds = [] }) {
     setError("");
     if (
       selected &&
-      (!["image/jpeg", "image/png", "image/webp"].includes(selected.type) ||
-        selected.size > MAX_IMAGE_SIZE)
+      !["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"].includes(selected.type)
     ) {
-      setError("JPEG・PNG・WebP形式で、5MB以下の画像を選択してください。");
+      setError("対応していない画像形式です。JPEG・PNG・WebP・HEIC・HEIF形式を選択してください。");
+      event.target.value = "";
+      setImage(null);
+      return;
+    }
+    if (selected && selected.size > MAX_IMAGE_SIZE) {
+      setError("画像は5MB以下にしてください。");
       event.target.value = "";
       setImage(null);
       return;
@@ -128,7 +133,7 @@ export default function PostComposer({ guilds = [] }) {
       <div className="image-upload-field">
         <label htmlFor="post-image">画像（任意）</label>
         <input
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
           className="image-upload-input"
           id="post-image"
           ref={imageInput}
@@ -138,7 +143,7 @@ export default function PostComposer({ guilds = [] }) {
         <label className="image-upload-button" htmlFor="post-image">
           {image ? "画像を選び直す" : "画像を選択"}
         </label>
-        <span className="image-upload-hint">JPEG・PNG・WebP / 5MBまで</span>
+        <span className="image-upload-hint">JPEG・PNG・WebP・HEIC・HEIF / 5MBまで</span>
         {image && previewUrl ? (
           <div className="image-preview">
             <Image

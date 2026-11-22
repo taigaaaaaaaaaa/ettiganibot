@@ -195,6 +195,27 @@
     ]
   },
   {
+    "name": "verify-panel",
+    "description": "設定済みの認証パネルを再送信します",
+    "options": []
+  },
+  {
+    "name": "verify-setup",
+    "description": "サーバー認証を設定し、認証パネルを送信します",
+    "options": [
+      {
+        "name": "log_channel",
+        "description": "認証ログの送信先チャンネル",
+        "options": []
+      }
+    ]
+  },
+  {
+    "name": "verify-status",
+    "description": "サーバー認証の設定と認証者数を表示します",
+    "options": []
+  },
+  {
     "name": "ettigani_join",
     "description": "現在いるボイスチャンネルで読み上げを開始します",
     "options": []

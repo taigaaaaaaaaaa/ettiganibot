@@ -99,7 +99,52 @@ Discord OAuth2認証、認証付き投稿API、サーバーメンバーシップ
 
 Docker運用ではこのJSONを`ANNOUNCEMENTS_HOST_PATH`で指定したホスト側ファイルから読み取ります。追加・編集はファイルを保存するだけで反映され、再ビルドは不要です。
 
-Guild登録一覧はBot起動時とGuild参加・退出時に`ettiganibot/data/guilds.json`へ保存します。Discord Developer PortalでPrivileged Gateway Intentsの`Server Members Intent`を有効にし、Botを再起動してください。Webの`DISCORD_BOT_TOKEN`には同じBotのトークンをサーバー環境変数として設定します。ブラウザーへは渡しません。
+Guild登録一覧はBot起動時とGuild参加・退出時に`ettiganibot/data/guilds.json`へ保存します。Discord Developer PortalでPrivileged Gateway Intentsの`Server Members Intent`を有効にし、Botを再起動してください。Webの`DISCORD_BOT_TOKEN`には同じBotのトークンをサーバー環境変数として設定してください。
+
+## サーバー認証
+
+既存サイトの`/verify?guild=<Guild ID>`を認証画面として使用します。Discordパネル、Cloudflare Turnstileのサーバー側Siteverify、Discord OAuth2 `identify`、規約同意の順に処理し、認証結果とGuild設定はSQLiteへ保存します。認証ロール作成・パネル送信・認証ログチャンネル設定はBotコマンドが行います。
+
+### API
+
+| API                                              | 用途                                                                                            |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `POST /api/verify/start`                         | Turnstile Siteverify成功後にOAuth stateをSQLiteへ保存し、Discord認証へリダイレクトするURLを返す |
+| `GET /api/verify/callback`                       | OAuth state照合、Discordユーザー/Guild参加の確認、規約同意セッション作成                        |
+| `POST /api/verify/complete`                      | 規約同意、認証済みユーザーの重複確認、ロール付与、ログ送信                                      |
+| `GET /api/internal/verification/guilds/:guildId` | Bot用のGuild認証設定・状態取得。共有Secret必須                                                  |
+| `PUT /api/internal/verification/guilds/:guildId` | Bot用の認証設定保存。共有Secret必須                                                             |
+| `POST /api/internal/verification/guilds/:guildId` | Botが認証ロール剥奪を記録。共有Secret必須                                                        |
+
+### SQLiteテーブル
+
+- `verified_users`: `id`, `guild_id`, `user_id`, `username`, `verified_at`, `revoked`, `revoked_at`。Guildとユーザーの組み合わせに一意制約を設定。Botが認証ロール剥奪を検知すると`revoked`を記録し、ユーザーが退出・再参加しても保持します。明示的な再認証のロール付与成功時にのみ解除します。
+- `guild_settings`: `guild_id`, `log_channel_id`, `panel_channel_id`, `role_id`, `created_at`, `updated_at`。
+- `verification_sessions`: OAuth stateハッシュ、Turnstile確認時刻、Guild、認証ステージ、ユーザー、期限、および完了状態(`pending`/`processing`/`completed`)を保存。処理はclaim token付きで排他的にclaimされ、lease期限切れの古い処理は新しい処理を解除・完了できません。OAuthアクセストークンは保存しません。
+- `verification_rate_limits`: ハッシュ化したレート制限キー、時間窓、要求数を保存します。verify startはIPあたり10回/分とGuild/IPあたり30回/分、completeはIPあたり30回/分とセッションあたり5回/分、内部APIは認証失敗IPあたり10回/分・認証済みIPあたり600回/分、およびGuild/methodごとにGET 120回・PUT 30回・失効POST 300回/分に制限し、超過時は`429`と`Retry-After`を返します。IPはリバースプロキシが上書きする`X-Real-IP`のみを使用します。
+
+本番のCloudflare Tunnel構成では、NginxがCloudflareの`CF-Connecting-IP`を`X-Real-IP`としてWebへ渡します。WebコンテナはComposeで直接公開せず、信頼されたTunnel/Nginx経由で公開してください。
+
+認証ロールの剥奪記録にはBotの`GuildMembers` intentと稼働が必要です。Botが停止中に行われた剥奪イベントは受信できないため、権限剥奪後はBotログと`/verify-status`を確認してください。既存SQLite DBはWeb起動時に列を追加するため、アップデート前にDBをバックアップしてください。
+
+DB上に過去の認証記録があっても、Discord上で認証ロールがないユーザーにはcallbackがロールを直接付与せず、Turnstile/OAuth/規約同意の再認証を要求します。これはBot停止中などにロール剥奪イベントを取りこぼした場合の安全側動作です。
+
+DBパスは`VERIFY_DATABASE_PATH`（Compose既定値`/app/community-data/verification.sqlite`）で指定します。`community-data`ボリュームはWeb UID 1001が書き込みます。
+
+### 環境変数
+
+| 変数                          | 用途                                                             |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `VERIFY_DISCORD_REDIRECT_URI` | Discord OAuth2 callback URL（Developer Portalにも同一URLを登録） |
+| `TURNSTILE_SITE_KEY`          | Turnstileブラウザー用公開キー（公開キーだがサーバー環境で管理）  |
+| `TURNSTILE_SECRET_KEY`        | Turnstile Siteverify用サーバーSecret                             |
+| `VERIFY_INTERNAL_SECRET`      | BotとWeb間の内部API認証用。Bot側と同一値                         |
+| `VERIFY_DATABASE_PATH`        | SQLiteファイルパス                                               |
+| `VERIFY_WEB_URL`              | Botが認証ページURLを組み立てるサイトURL                          |
+
+初回はDiscord Developer PortalのOAuth Redirect URIへ`https://ettiganibot-dashboard.com/api/verify/callback`を追加し、Cloudflare Turnstileの許可ホストへ`ettiganibot-dashboard.com`を登録します。Botの`.env`にも`VERIFY_INTERNAL_SECRET`と`VERIFY_WEB_URL`を設定します。Bot側の`Server Members Intent`を有効化して再起動してください。
+
+管理者が`/verify-setup log_channel:#認証ログ`を実行すると、SQLite設定と認証パネルが作成されます。`/verify-panel`は設定済みパネルの再送信、`/verify-status`は登録数とTurnstile/OAuth/DB/ロール/ログチャンネルの確認に使います。詳しい運用・検証手順は[ルートREADMEのサーバー認証機能](../README.md#サーバー認証機能)を参照してください。します。ブラウザーへは渡しません。
 
 ## 9. コミュニティプラットフォーム
 

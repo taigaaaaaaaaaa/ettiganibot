@@ -35,6 +35,11 @@ services:
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
       DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
+      VERIFY_DISCORD_REDIRECT_URI: ${VERIFY_DISCORD_REDIRECT_URI:-}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      VERIFY_INTERNAL_SECRET: ${VERIFY_INTERNAL_SECRET:-}
+      VERIFY_DATABASE_PATH: ${VERIFY_DATABASE_PATH:-/app/community-data/verification.sqlite}
     volumes:
       - ${BOT_DATA_HOST_PATH:-./ettiganibot/data}:/app/bot-data:ro
       - ${ANNOUNCEMENTS_HOST_PATH:-./web/app/data/announcements.json}:/app/site-data/announcements.json:ro
@@ -43,7 +48,13 @@ services:
     expose:
       - "3000"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/statistics').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/statistics').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3

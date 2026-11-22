@@ -1,10 +1,12 @@
 FROM node:22-alpine AS base
+RUN apk add --no-cache libstdc++
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
 FROM base AS dependencies
 WORKDIR /app/web
+RUN apk add --no-cache python3 make g++
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
@@ -16,7 +18,7 @@ COPY --from=dependencies /app/web/node_modules ./node_modules
 COPY . ./
 RUN pnpm run build
 
-FROM node:22-alpine AS runner
+FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000

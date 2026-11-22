@@ -10,6 +10,19 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const HEIF_BRANDS = new Set([
+  "heic",
+  "heif",
+  "heix",
+  "hevc",
+  "hevx",
+  "heim",
+  "heis",
+  "hevm",
+  "hevs",
+  "mif1",
+  "msf1",
+]);
 const IMAGE_TYPES = new Map([
   [
     "image/jpeg",
@@ -34,7 +47,34 @@ const IMAGE_TYPES = new Map([
         bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP",
     },
   ],
+  [
+    "image/heic",
+    {
+      extension: "heic",
+      signature: isHeifImage,
+    },
+  ],
+  [
+    "image/heif",
+    {
+      extension: "heif",
+      signature: isHeifImage,
+    },
+  ],
 ]);
+
+function isHeifImage(bytes) {
+  if (bytes.length < 16 || bytes.toString("ascii", 4, 8) !== "ftyp") return false;
+
+  const boxSize = bytes.readUInt32BE(0);
+  if (boxSize < 16 || boxSize > bytes.length) return false;
+
+  if (HEIF_BRANDS.has(bytes.toString("ascii", 8, 12))) return true;
+  for (let offset = 16; offset + 4 <= boxSize; offset += 4) {
+    if (HEIF_BRANDS.has(bytes.toString("ascii", offset, offset + 4))) return true;
+  }
+  return false;
+}
 
 export async function POST(request) {
   const rejected = rejectCrossOriginRequest(request);
@@ -59,7 +99,7 @@ export async function POST(request) {
   const imageType = IMAGE_TYPES.get(image.type);
   if (!imageType) {
     return NextResponse.json(
-      { error: "JPEG・PNG・WebP形式の画像を選択してください。" },
+      { error: "対応していない画像形式です。JPEG・PNG・WebP・HEIC・HEIF形式を選択してください。" },
       { status: 400 },
     );
   }

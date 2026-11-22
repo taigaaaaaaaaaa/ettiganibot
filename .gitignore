@@ -28,4 +28,7 @@ web/.next/
 web/out/
 web/next-env.d.ts
 web/data/community.json
+web/data/verification.sqlite
+web/data/verification.sqlite-shm
+web/data/verification.sqlite-wal
 community-data/

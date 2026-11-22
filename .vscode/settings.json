@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^pnpm add better-sqlite3$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^node --version; npm --version; corepack --version; corepack pnpm --version$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

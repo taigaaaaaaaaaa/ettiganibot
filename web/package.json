@@ -17,6 +17,7 @@
     "generate:commands": "node scripts/generate-command-catalog.mjs"
   },
   "dependencies": {
+    "better-sqlite3": "12.4.1",
     "lucide-react": "^0.468.0",
     "next": "^15.5.0",
     "react": "^19.1.0",

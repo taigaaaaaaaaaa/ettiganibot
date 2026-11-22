@@ -6,11 +6,17 @@ import { getCommunityUploadDirectory } from "@/lib/community";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CONTENT_TYPES = { jpg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const CONTENT_TYPES = {
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+};
 
 export async function GET(request, { params }) {
   const { fileId } = await params;
-  const match = /^([0-9a-f-]{36})\.(jpg|png|webp)$/i.exec(fileId);
+  const match = /^([0-9a-f-]{36})\.(jpg|png|webp|heic|heif)$/i.exec(fileId);
   if (!match) return new NextResponse(null, { status: 404 });
 
   try {

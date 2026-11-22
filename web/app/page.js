@@ -67,6 +67,15 @@ export default async function HomePage({ searchParams }) {
             <MessageCircle aria-hidden="true" size={17} />
             コミュニティ
           </Link>
+          <a
+            className="action-link"
+            href="https://discord.gg/pkvfkhFyv"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <MessageCircle aria-hidden="true" size={17} />
+            公式Discordサーバー
+          </a>
           <Link className="action-link" href="/dev-notes">
             <ArrowRight aria-hidden="true" size={17} />
             開発者ノート

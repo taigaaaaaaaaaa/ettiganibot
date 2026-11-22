@@ -1,15 +1,26 @@
-import { MessageFlags } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  MessageFlags,
+  PermissionFlagsBits,
+} from "discord.js";
 import fs from "fs";
-import { processUserProgress, reactedMessages, formatDate } from "./xpSystem.js";
+import {
+  processUserProgress,
+  reactedMessages,
+  formatDate,
+} from "./xpSystem.js";
 import { logsPath, guildDataPath } from "./dataPaths.js";
 import { logSlashCommand } from "./commandLogger.js";
 import { enqueueMessage, handleVoiceStateUpdate } from "./voiceManager.js";
+import {
+  getWebBaseUrl,
+  verificationApi,
+} from "../commands/verification/common.js";
 
 const SPECIAL_GUILD_ID = "1515227043367882932";
-const ignoreUsers = [
-  "1347757854005792818",
-  "1444297892993962045",
-];
+const ignoreUsers = ["1347757854005792818", "1444297892993962045"];
 
 // susuru用
 const susuruCooldown = new Map();
@@ -33,7 +44,7 @@ function writeKeywordLog(message, keyword) {
       `URL: https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`,
       "",
     ].join("\n"),
-    "utf8"
+    "utf8",
   );
 }
 
@@ -70,8 +81,43 @@ export function saveDeletedMessage(data) {
   }
 }
 
+async function recordVerificationRevocation(guildId, userId, removedRoleIds) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await verificationApi(guildId, "POST", { userId, removedRoleIds });
+    } catch (error) {
+      if (error.status !== 429 || attempt === 2) throw error;
+      const delay = Math.min(Math.max(error.retryAfter || 1, 1), 60);
+      await new Promise((resolve) => setTimeout(resolve, delay * 1000));
+    }
+  }
+  throw new Error("Verification revocation retries were exhausted.");
+}
+
 // bot のイベント固有処理をまとめて登録する
 export function registerBotEvents(client, { sendLogToAPI, commands }) {
+  client.on("guildMemberUpdate", async (oldMember, newMember) => {
+    const removedRoleIds = oldMember.roles.cache
+      .filter((role) => !newMember.roles.cache.has(role.id))
+      .map((role) => role.id);
+    if (removedRoleIds.length === 0) return;
+
+    try {
+      const result = await recordVerificationRevocation(
+        newMember.guild.id,
+        newMember.id,
+        removedRoleIds,
+      );
+      if (result.revoked) {
+        console.info(
+          `Verification revoked after role removal: guild=${newMember.guild.id} user=${newMember.id}`,
+        );
+      }
+    } catch (error) {
+      console.error("Verification role removal could not be recorded:", error);
+    }
+  });
+
   client.on("voiceStateUpdate", (oldState, newState) => {
     handleVoiceStateUpdate(oldState, newState);
   });
@@ -85,7 +131,9 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
       if (reaction.emoji.name !== "🦀") return;
 
       const message = reaction.message;
-      console.log(`🦀 リアクション検知: ${user.tag} → ${message.author?.tag ?? "不明"} / 内容: ${message.content}`);
+      console.log(
+        `🦀 リアクション検知: ${user.tag} → ${message.author?.tag ?? "不明"} / 内容: ${message.content}`,
+      );
 
       const today = new Date();
       const fileName = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}.log`;
@@ -105,7 +153,7 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
           `URL: https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`,
           "",
         ].join("\n"),
-        "utf8"
+        "utf8",
       );
 
       if (reactedMessages.has(message.id)) return;
@@ -148,7 +196,9 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
     const lower = message.content.toLowerCase();
     const xpKeywords = ["えっち", "エッチ"];
     if (xpKeywords.some((word) => lower.includes(word.toLowerCase()))) {
-      console.log(`🔍 キーワード検知: ${message.author.tag} / 内容: ${message.content}`);
+      console.log(
+        `🔍 キーワード検知: ${message.author.tag} / 内容: ${message.content}`,
+      );
       writeKeywordLog(message, "えっち");
       await message.reply("えっちがに！！！");
       await processUserProgress(message);
@@ -157,128 +207,158 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
 
     // ユーザーごとのクールタイム管理
 
-const susuruKeywords = ["susuru", "すする", "ラーメン"];
-if (susuruKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+    const susuruKeywords = ["susuru", "すする", "ラーメン"];
+    if (susuruKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+      const userId = message.author.id;
+      const now = Date.now();
+      const cooldownTime = 10000; // ← 10秒クールタイム
 
-  const userId = message.author.id;
-  const now = Date.now();
-  const cooldownTime = 10000; // ← 10秒クールタイム
-
-  // クールタイム中なら反応しない
-  if (susuruCooldown.has(userId)) {
-    const lastUsed = susuruCooldown.get(userId);
-    if (now - lastUsed < cooldownTime) {
-      return;
-    }
-  }
-
-  // クールタイム更新
-  susuruCooldown.set(userId, now);
-
-  console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
-  writeKeywordLog(message, "susuru / すする / ラーメン");
-
-  const susuruReply =
-"こちらが 濃厚とんこつ豚無双さんの\n濃厚無双ラーメン 海苔トッピングです\n# うっひょ～～～～～～！\n着席時 コップに水垢が付いていたのを見て\n大きな声を出したら 店主さんからの誠意で\nチャーシューをサービスしてもらいました\n俺の動画次第でこの店潰す事だってできるんだぞって事で\n## いただきま～～～～す！まずはスープから\n# コラ～！\nこれでもかって位ドロドロの濃厚スープの中には\n虫が入っており 怒りのあまり\n卓上調味料を全部倒してしまいました～！\nすっかり店側も立場を弁え 誠意のチャーシュー丼を貰った所で\nお次に 圧倒的存在感の極太麺を\n# 啜る～！\n# 殺すぞ～！\nワシワシとした食感の麺の中には、髪の毛が入っており\nさすがのSUSURUも 厨房に入って行ってしまいました～！\nちなみに、店主さんが土下座している様子は ぜひサブチャンネルをご覧ください";
-
-  // ① 返信メッセージを送る
-  const sentMessage = await message.reply(susuruReply);
-
-  // ② 一定時間後に編集（3秒後）
-  setTimeout(async () => {
-    try {
-      await sentMessage.edit("本家見てね！\nhttps://youtu.be/13eeEmRpWMI?si=c3G7JZJifoYrMYDL");
-    } catch (err) {
-      console.error("❌ SUSURU返信の編集に失敗:", err);
-      return;
-    }
-
-    // ③ 編集したメッセージをさらに一定時間後に削除（5秒後）
-    setTimeout(async () => {
-      try {
-        await sentMessage.delete();
-      } catch (err) {
-        console.error("❌ SUSURU返信の削除に失敗:", err);
+      // クールタイム中なら反応しない
+      if (susuruCooldown.has(userId)) {
+        const lastUsed = susuruCooldown.get(userId);
+        if (now - lastUsed < cooldownTime) {
+          return;
+        }
       }
-    }, 5000); // ← 編集後5秒で削除
 
-  }, 3000); // ← 3秒後に編集
+      // クールタイム更新
+      susuruCooldown.set(userId, now);
 
-  return;
-}
+      console.log(
+        `🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`,
+      );
+      writeKeywordLog(message, "susuru / すする / ラーメン");
 
-const noXPKeywords = ["テルマニア", "てるまにあ"];
-if (noXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
-  console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
-  writeKeywordLog(message, "テルマニア");
+      const susuruReply =
+        "こちらが 濃厚とんこつ豚無双さんの\n濃厚無双ラーメン 海苔トッピングです\n# うっひょ～～～～～～！\n着席時 コップに水垢が付いていたのを見て\n大きな声を出したら 店主さんからの誠意で\nチャーシューをサービスしてもらいました\n俺の動画次第でこの店潰す事だってできるんだぞって事で\n## いただきま～～～～す！まずはスープから\n# コラ～！\nこれでもかって位ドロドロの濃厚スープの中には\n虫が入っており 怒りのあまり\n卓上調味料を全部倒してしまいました～！\nすっかり店側も立場を弁え 誠意のチャーシュー丼を貰った所で\nお次に 圧倒的存在感の極太麺を\n# 啜る～！\n# 殺すぞ～！\nワシワシとした食感の麺の中には、髪の毛が入っており\nさすがのSUSURUも 厨房に入って行ってしまいました～！\nちなみに、店主さんが土下座している様子は ぜひサブチャンネルをご覧ください";
 
-  const noXPReplies = [
-    "えっちだに...",
-    "テルマニアさん大好きだよはーと",
-  ];
+      // ① 返信メッセージを送る
+      const sentMessage = await message.reply(susuruReply);
 
-  const rareReply =
-    "えっちだに...\n# これを引いたあなたはテルマニア君にひとつお願いをしてもよいこととする。*なんでも*いいらしいよ。\n-# 排出率1%のメッセージです。おめでとう！！";
+      // ② 一定時間後に編集（3秒後）
+      setTimeout(async () => {
+        try {
+          await sentMessage.edit(
+            "本家見てね！\nhttps://youtu.be/13eeEmRpWMI?si=c3G7JZJifoYrMYDL",
+          );
+        } catch (err) {
+          console.error("❌ SUSURU返信の編集に失敗:", err);
+          return;
+        }
 
-  const rareChance = 0.01;
+        // ③ 編集したメッセージをさらに一定時間後に削除（5秒後）
+        setTimeout(async () => {
+          try {
+            await sentMessage.delete();
+          } catch (err) {
+            console.error("❌ SUSURU返信の削除に失敗:", err);
+          }
+        }, 5000); // ← 編集後5秒で削除
+      }, 3000); // ← 3秒後に編集
 
-  const pick =
-    Math.random() < rareChance
-      ? rareReply
-      : noXPReplies[Math.floor(Math.random() * noXPReplies.length)];
+      return;
+    }
 
-  await message.reply(pick);
-  return;
-}
+    const noXPKeywords = ["テルマニア", "てるまにあ"];
+    if (noXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+      console.log(
+        `🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`,
+      );
+      writeKeywordLog(message, "テルマニア");
 
-const secondnoXPKeywords = ["あまのじゃむ", "リア充"];
-if (secondnoXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
-  console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
-  writeKeywordLog(message, "あまのじゃむ / リア充");
+      const noXPReplies = ["えっちだに...", "テルマニアさん大好きだよはーと"];
 
-  const secondnoXPReplies = [
-    "リア充はタンスの角に足の小指ぶつけろ！！",
-    "僕らの分まで幸せになれよ;;",
-  ];
+      const rareReply =
+        "えっちだに...\n# これを引いたあなたはテルマニア君にひとつお願いをしてもよいこととする。*なんでも*いいらしいよ。\n-# 排出率1%のメッセージです。おめでとう！！";
 
-  const rareReply =
-    "\n-# 排出率1%のメッセージです。おめでとう！！";
+      const rareChance = 0.01;
 
-  const rareChance = 0.01;
+      const pick =
+        Math.random() < rareChance
+          ? rareReply
+          : noXPReplies[Math.floor(Math.random() * noXPReplies.length)];
 
-  const pick =
-    Math.random() < rareChance
-      ? rareReply
-      : secondnoXPReplies[Math.floor(Math.random() * secondnoXPReplies.length)];
+      await message.reply(pick);
+      return;
+    }
 
-  await message.reply(pick);
-  return;
-}
+    const secondTerumanoXPKeywords = ["テルマー"];
+    if (
+   secondTerumanoXPKeywords.some((word) =>
+    lower.includes(word.toLowerCase()),
+   )
+   ) {
+    console.log(
+      `🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`,
+    );
 
-const chocoKeywords = ["チョコch", "チョコさん"];
-if (chocoKeywords.some((word) => lower.includes(word.toLowerCase()))) {
-  console.log(`🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`);
-  writeKeywordLog(message, "チョコch / チョコさん");
+    writeKeywordLog(message, "テルマー");
 
-  const chocoReplies = [
-    "チョコchって変態カカオ豆だよね（？）",
-    "チョコさんってロリコンだよね",
-  ];
+    const secondTerumaReplies = [
+      "えろすぎだろ...",
+      "テルマニアえろすぎだろ...",
+    ];
 
-  const rareReply =
-    "変態カカオ豆とロリコン両立させてるのってすごいよねチョコch\n-# 排出率1%のメッセージです。おめでとう！！";
+    const pick =
+     secondTerumaReplies[
+      Math.floor(Math.random() * secondTerumaReplies.length)
+    ];
 
-  const rareChance = 0.01;
+    await message.reply(pick);
+    return;
+   }
 
-  const pick =
-    Math.random() < rareChance
-      ? rareReply
-      : chocoReplies[Math.floor(Math.random() * chocoReplies.length)];
+    const secondnoXPKeywords = ["あまのじゃむ", "リア充"];
+    if (secondnoXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+      console.log(
+        `🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`,
+      );
+      writeKeywordLog(message, "あまのじゃむ / リア充");
 
-  await message.reply(pick);
-  return;
-}
+      const secondnoXPReplies = [
+        "リア充はタンスの角に足の小指ぶつけろ！！\n-# 僕らの分まで幸せになれよ;;"
+      ];
 
+      const rareReply = "\n-# 排出率1%のメッセージです。おめでとう！！";
+
+      const rareChance = 0.01;
+
+      const pick =
+        Math.random() < rareChance
+          ? rareReply
+          : secondnoXPReplies[
+              Math.floor(Math.random() * secondnoXPReplies.length)
+            ];
+
+      await message.reply(pick);
+      return;
+    }
+
+    const chocoKeywords = ["チョコch", "チョコさん"];
+    if (chocoKeywords.some((word) => lower.includes(word.toLowerCase()))) {
+      console.log(
+        `🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`,
+      );
+      writeKeywordLog(message, "チョコch / チョコさん");
+
+      const chocoReplies = [
+        "チョコchって変態カカオ豆だよね（？）",
+        "チョコさんってロリコンだよね",
+      ];
+
+      const rareReply =
+        "変態カカオ豆とロリコン両立させてるのってすごいよねチョコch\n-# 排出率1%のメッセージです。おめでとう！！";
+
+      const rareChance = 0.01;
+
+      const pick =
+        Math.random() < rareChance
+          ? rareReply
+          : chocoReplies[Math.floor(Math.random() * chocoReplies.length)];
+
+      await message.reply(pick);
+      return;
+    }
   });
 
   client.on("messageCreate", async (message) => {
@@ -299,6 +379,74 @@ if (chocoKeywords.some((word) => lower.includes(word.toLowerCase()))) {
   });
 
   client.on("interactionCreate", async (interaction) => {
+    if (interaction.isButton() && interaction.customId === "verify:start") {
+      try {
+        if (
+          interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+        ) {
+          await interaction.reply({
+            content: "✅ 管理者は認証不要です。",
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        if (!interaction.guildId) {
+          await interaction.reply({
+            content: "❌ サーバー内の認証パネルから操作してください。",
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        const verificationStatus = await verificationApi(
+          interaction.guildId,
+          "GET",
+          undefined,
+          interaction.user.id,
+        );
+        const { settings } = verificationStatus;
+        if (!settings) {
+          await interaction.reply({
+            content:
+              "❌ 認証設定がありません。サーバー管理者に `/verify-setup` を依頼してください。",
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        if (interaction.member?.roles?.cache?.has(settings.role_id)) {
+          await interaction.reply({
+            content: "✅ 既に認証済みです。",
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        const verifyUrl = new URL("/verify", getWebBaseUrl());
+        verifyUrl.searchParams.set("guild", interaction.guildId);
+        await interaction.reply({
+          content:
+            "Cloudflare Turnstile認証を完了して、Discord認証へ進んでください。",
+          components: [
+            new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setLabel("認証ページを開く")
+                .setStyle(ButtonStyle.Link)
+                .setURL(verifyUrl.toString()),
+            ),
+          ],
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (error) {
+        console.error("Verification panel button failed:", error);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({
+            content:
+              "❌ 認証システムに接続できません。時間をおいて再度お試しください。",
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     const startedAt = Date.now();
@@ -325,7 +473,10 @@ if (chocoKeywords.some((word) => lower.includes(word.toLowerCase()))) {
       result = "エラー";
       errorMessage = err?.message ?? String(err);
       console.error(err);
-      const response = { content: "エラーが発生しました。", flags: MessageFlags.Ephemeral };
+      const response = {
+        content: "エラーが発生しました。",
+        flags: MessageFlags.Ephemeral,
+      };
       try {
         if (interaction.deferred) {
           await interaction.editReply(response.content);
@@ -342,7 +493,7 @@ if (chocoKeywords.some((word) => lower.includes(word.toLowerCase()))) {
         logSlashCommand(interaction, {
           result,
           durationMs: Date.now() - startedAt,
-          error: errorMessage
+          error: errorMessage,
         });
       } catch (logError) {
         console.error("スラッシュコマンドログの記録に失敗:", logError);

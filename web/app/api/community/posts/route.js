@@ -95,7 +95,7 @@ export async function POST(request) {
   const thumbnail = typeof input.thumbnail === "string" ? input.thumbnail.trim() : "";
   if (
     thumbnail &&
-    !/^\/api\/community\/uploads\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp)$/i.test(
+    !/^\/api\/community\/uploads\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp|heic|heif)$/i.test(
       thumbnail,
     )
   ) {

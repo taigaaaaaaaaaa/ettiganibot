@@ -56,7 +56,7 @@ export async function GET(request) {
   if (response.headers.has("x-middleware-set-cookie")) {
     responseHeaders["x-middleware-set-cookie"] = "<redacted>";
   }
-  console.log("OAuth state generated", {
+  console.log("Community OAuth state generated", {
     stateFingerprint,
     cookieOptions: stateCookieOptions(),
     callbackUrl,
