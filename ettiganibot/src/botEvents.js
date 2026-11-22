@@ -308,6 +308,31 @@ export function registerBotEvents(client, { sendLogToAPI, commands }) {
     return;
    }
 
+    const sukebegani = ["すけべがに", "スケベガニ", "すけべ"];
+    if (
+   sukebegani.some((word) =>
+    lower.includes(word.toLowerCase()),
+   )
+   ) {
+    console.log(
+      `🔍 キーワード検知（返信のみ）: ${message.author.tag} / 内容: ${message.content}`,
+    );
+
+    writeKeywordLog(message, "スケベガニ");
+
+    const sukebeganiReplies = [
+      "ｽｰｹｰﾍﾞｰｶﾞｰﾆｰ\nｲｴｰｰｰｲ!!!!"
+    ];
+
+    const pick =
+     sukebeganiReplies[
+      Math.floor(Math.random() * sukebeganiReplies.length)
+    ];
+
+    await message.reply(pick);
+    return;
+   }
+
     const secondnoXPKeywords = ["あまのじゃむ", "リア充"];
     if (secondnoXPKeywords.some((word) => lower.includes(word.toLowerCase()))) {
       console.log(
